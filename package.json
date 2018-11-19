@@ -1,0 +1,17 @@
+{
+  "name": "project-4",
+  "scripts": {
+    "build": "cargo build --release --target=wasm32-unknown-emscripten",
+    "copy": "npm run copy:js && npm run copy:wasm",
+    "copy:js": "cp target/wasm32-unknown-emscripten/release/project4.js public/project4.js",
+    "copy:wasm": "cp target/wasm32-unknown-emscripten/release/deps/project4.wasm public/project4.wasm",
+    "prepare": "npm run build && npm run copy",
+
+    "build_debug": "cargo build --target=wasm32-unknown-emscripten",
+    "copy_debug": "npm run copy_debug:js && npm run copy_debug:wasm",
+    "copy_debug:js": "cp target/wasm32-unknown-emscripten/debug/project4.js public/project4.js",
+    "copy_debug:wasm": "cp target/wasm32-unknown-emscripten/debug/deps/project4.wasm public/project4.wasm",
+    "prepare_debug": "npm run build_debug && npm run copy_debug"
+  },
+  "license": "ISC"
+}

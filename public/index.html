@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<title>Project 4</title>
+</head>
+<body>
+<canvas width="600" height="480"/>
+<script>
+// Module is used frequently by emscripten
+var Module = {
+    // Used to easily access canvas from the code
+    canvas: document.querySelector('canvas'),
+    // Pre-load asset files and mount them to directories
+    preRun: function() {
+        FS.createPreloadedFile('/', "cat.obj", 'cat.obj',  true, false);
+    }
+}
+// Start a request for the WASM code
+let xhr = new XMLHttpRequest();
+// WASM should be read as binary data
+xhr.responseType = "arraybuffer";
+// This is run when the request finishes
+xhr.addEventListener("load", function() {
+    // Store the wasm code
+    Module.wasmBinary = this.response;
+    // Create a script element
+    var script = document.createElement('script')
+    // Set script source to our bootstrap code
+    script.src = "project4.js"
+    // Insert script into document
+    document.body.appendChild(script)
+})
+// Set url of wasm file
+xhr.open("GET", "project4.wasm");
+// Start the request
+xhr.send();
+</script>
+</body>
+</html>
