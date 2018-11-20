@@ -5,7 +5,7 @@
     "copy": "npm run copy:js && npm run copy:wasm && npm run copy:data",
     "copy:js": "cp target/wasm32-unknown-emscripten/release/project4.js data/project4.js",
     "copy:wasm": "cp target/wasm32-unknown-emscripten/release/deps/project4.wasm data/project4.wasm",
-    "copy:data": "cp data/* docs/",
+    "copy:data": "cp data/* public/",
     "prepare": "npm run build && npm run copy"
   },
   "license": "ISC"
