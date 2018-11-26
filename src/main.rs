@@ -96,8 +96,11 @@ impl Context {
         self.objects.push(Box::new(table));
 
         // Load the cat
-        let mut cat = Obj::load("/cat.obj", vec3(5.0, 3.5, 5.0)).unwrap();
+        let mut cat = Obj::load("/cat.obj", vec3(5.0, 3.5, 5.0), 1).unwrap();
         self.objects.push(Box::new(cat));
+
+        let mut potion = Obj::load("/potion.obj", vec3(5.0, 3.5, 5.0), 1).unwrap();
+        self.objects.push(Box::new(potion));
 
         // Load the texture file
         /*let cat_texture = image::open("/cat_diff.tga").unwrap();
@@ -106,9 +109,9 @@ impl Context {
         // Get image as raw bytes
         let cat_texture = cat_texture.as_rgb8().unwrap().clone();
         let texture = gl.gen_textures(1)[0];
-
+        
         // load texture data in here
-
+        
         gl.active_texture(gl::TEXTURE0);
         gl.bind_texture(gl::TEXTURE_2D_ARRAY, texture);
         gl.tex_parameter_i(

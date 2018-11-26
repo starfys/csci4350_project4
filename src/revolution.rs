@@ -4,57 +4,27 @@ use matrix::{identity, matmul, rotate_y, translate, vec3, Vec3};
 use render::{quad, rectangular_prism, Color, Drawable, Vertex};
 
 pub struct Revolution {
+    path: Vec<Vec3>,
     vert_start: GLint,
     num_verts: GLsizei,
 }
 
 impl Revolution {
-    pub fn new(path: Vec<Vec3>) {
-        Room {
-            room_width,
-            room_height,
-            room_depth,
+    pub fn new(path: Vec<Vec3>) -> Revolution {
+        Revolution {
+            path,
             vert_start: 0,
             num_verts: 0,
         }
     }
 }
-impl Drawable for Room {
+impl Drawable for Revolution {
     /// Returns buffer data
     fn buffer_data(&mut self, vertex_start: GLint) -> Vec<f32> {
         // Store the vertex starting pointer
         self.vert_start = vertex_start;
-        // Layout of the room
-        //        y
-        // LTL----MT----RTR
-        // |      ||      |
-        // |h     ||      |
-        // |   w  ||   d  |
-        //zLBR----MB----RBR
-        // \      00      /
-        //  \            /
-        //   \ d       w/
-        //    \        /
-        //     \      /
-        //      \    /
-        //       \  /
-        //        \/
-        //        MF
-        //        x
-        // Create points
-        let ltl = vec3(0.0, self.room_height, self.room_width);
-        let lbr = vec3(0.0, 0.0, self.room_width);
-        let mb = vec3(0.0, 0.0, 0.0);
-        let mt = vec3(0.0, self.room_height, 0.0);
-        let rbr = vec3(self.room_depth, 0.0, 0.0);
-        let rtr = vec3(self.room_depth, self.room_height, 0.0);
-        let mf = vec3(self.room_depth, 0.0, self.room_width);
-        // Create vertex buffer
-        let mut vertices: Vec<Vertex> = Vec::with_capacity(18);
-        vertices.extend_from_slice(&quad(ltl, lbr, mb, mt));
-        vertices.extend_from_slice(&quad(mt, mb, rbr, rtr));
-        vertices.extend_from_slice(&quad(mb, lbr, mf, rbr));
-
+        // Start making vertices
+        let vertices: Vec<Vertex> = Vec::new();
         // Vertices
         self.num_verts = vertices.len() as GLint;
 

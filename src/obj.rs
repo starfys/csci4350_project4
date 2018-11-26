@@ -30,9 +30,9 @@ where
                 &self.indices[3],
                 &self.indices[0],
             ]
-                .iter()
-                .map(|face_index| face_index.vertex_index.clone())
-                .collect()
+            .iter()
+            .map(|face_index| face_index.vertex_index.clone())
+            .collect()
         } else {
             self.indices
                 .windows(3)
@@ -100,7 +100,12 @@ impl Group {
             faces: Vec::new(),
         }
     }
-    pub fn to_vertices(&self, center: Option<Vec3>, translate: Option<Vec3>) -> Vec<f32> {
+    pub fn to_vertices(
+        &self,
+        center: Option<Vec3>,
+        translate: Option<Vec3>,
+        offset: u32,
+    ) -> Vec<f32> {
         // If center is not given, just use origin
         let center = center.unwrap_or_else(Vec3::origin);
         let translate = translate.unwrap_or_else(Vec3::origin);
@@ -113,14 +118,17 @@ impl Group {
                 face.indices.iter().map(|index| {
                     (
                         // Get the vertex for this
-                        &(&self.vertices[(index.vertex_index - 1) as usize] - center) + translate,
+                        &(&self.vertices[(index.vertex_index - offset) as usize] - center)
+                            + translate,
                         index
                             .normal_index
-                            .map(|normal_index| self.normals[(normal_index - 1) as usize])
+                            .map(|normal_index| self.normals[(normal_index - offset) as usize])
                             .unwrap_or_else(Vec3::origin),
                         index
                             .texture_index
-                            .map(|texture_index| self.texture_coords[(texture_index - 1) as usize])
+                            .map(|texture_index| {
+                                self.texture_coords[(texture_index - offset) as usize]
+                            })
                             .unwrap_or_else(Vec2::origin),
                     )
                 })
@@ -133,7 +141,8 @@ impl Group {
                     normal.x, normal.y, normal.z,
                     texture.x, texture.y,
                 ]
-            }).collect()
+            })
+            .collect()
     }
 }
 
@@ -300,11 +309,12 @@ pub struct Obj {
     num_verts: GLsizei,
     center: Vec3,
     translate: Vec3,
+    offset: u32,
 }
 
 impl Obj {
     /// Loads a render object from a path
-    pub fn load<P>(path: P, translate: Vec3) -> Result<Self, io::Error>
+    pub fn load<P>(path: P, translate: Vec3, offset: u32) -> Result<Self, io::Error>
     where
         P: AsRef<Path> + std::fmt::Display,
     {
@@ -317,6 +327,7 @@ impl Obj {
             num_verts: 0,
             center,
             translate,
+            offset,
         })
     }
 }
@@ -330,7 +341,8 @@ impl Drawable for Obj {
         // Iterate over groups
         for group in &self.groups {
             // Extract data for the current group
-            let cur_vertices = group.to_vertices(Some(self.center), Some(self.translate));
+            let cur_vertices =
+                group.to_vertices(Some(self.center), Some(self.translate), self.offset);
             // Add existing data
             vertices.extend_from_slice(&cur_vertices);
         }
