@@ -4,7 +4,7 @@ use std::io;
 use std::path::Path;
 
 use gleam::gl;
-use gleam::gl::types::{GLsizei, GLuint};
+use gleam::gl::types::{GLint, GLsizei};
 use matrix::{identity, matmul, rotate_x, rotate_y, scale, translate};
 use rand::Rng;
 
@@ -14,16 +14,13 @@ use obj::{load_obj, vec3, Group, Vec3};
 
 pub trait Drawable {
     /// Returns buffer data
-    fn buffer_data(&mut self, elem_start: GLuint, vertex_start: GLuint) -> (Vec<f32>, Vec<u32>);
+    fn buffer_data(&mut self, vertex_start: GLint) -> Vec<f32>;
     /// Draws the shape
     fn draw(&self, gl: &Context);
 }
 pub struct Obj {
     groups: Vec<Group>,
-    colors: HashMap<String, Color>,
-    elem_start: GLuint,
-    num_elems: GLsizei,
-    vert_start: GLuint,
+    vert_start: GLint,
     num_verts: GLsizei,
     center: Vec3,
     translate: Vec3,
@@ -33,40 +30,21 @@ impl Obj {
     /// Loads a render object from a path
     pub fn load<P: AsRef<Path>>(path: P, translate: Vec3) -> Result<Self, io::Error> {
         // Parse object file
-        let groups = load_obj(path)?;
+        let (groups, center) = load_obj(path)?;
         // Generate the render object
         Ok(Obj {
             groups,
-            colors: HashMap::new(),
-            elem_start: 0,
-            num_elems: 0,
             vert_start: 0,
             num_verts: 0,
-            center: Vec3::origin(),
+            center,
             translate,
         })
-    }
-    /// Sets the color for a group
-    pub fn set_group_color(&mut self, group_name: String, color: Color) -> Result<(), io::Error> {
-        // Check to see if the group name corresponds to a loaded group
-        if self
-            .groups
-            .iter()
-            .find(|ref group| group.name == group_name)
-            .is_some()
-        {
-            self.colors.insert(group_name, color);
-            Ok(())
-        } else {
-            Err(io_error("Invalid group name"))
-        }
     }
 }
 impl Drawable for Obj {
     /// Returns buffer data
-    fn buffer_data(&mut self, elem_start: GLuint, vertex_start: GLuint) -> (Vec<f32>, Vec<u32>) {
+    fn buffer_data(&mut self, vertex_start: GLint) -> Vec<f32> {
         // Store element start
-        self.elem_start = elem_start;
         self.vert_start = vertex_start;
         // Store vertex data
         let mut vertices: Vec<f32> = Vec::new();
@@ -74,23 +52,15 @@ impl Drawable for Obj {
         let mut indices: Vec<u32> = Vec::new();
         // Iterate over groups
         for group in &self.groups {
-            let def = Color::default();
-            // Get the group's color. If none is provided, use the default (white)
-            let color = self.colors.get(&group.name).unwrap_or(&def);
             // Extract data for the current group
-            let (cur_vertices, cur_indices, center, size) = group.to_draw_info(&color);
-            self.center = center;
-            // Modify element indices to acknowledge offset
-            let cur_indices = cur_indices.iter().map(|index| index + (elem_start as u32));
-            // Modify indices to start further in the array
+            let cur_vertices = group.to_vertices(Some(self.center));
             // Add existing data
             vertices.extend_from_slice(&cur_vertices);
-            indices.extend(cur_indices);
         }
-        // Store element end
-        self.num_elems = indices.len() as GLsizei;
+        // Store the number of vertices
         self.num_verts = vertices.len() as GLsizei;
-        (vertices, indices)
+        // Return vertices
+        vertices
     }
     /// Draws the object
     fn draw(&self, ctx: &Context) {
@@ -108,12 +78,25 @@ impl Drawable for Obj {
         let v_matrix = matmul(rotate_y(ctx.theta), ctx.camera);
         let mv_matrix = matmul(v_matrix, m_matrix);
         gl.uniform_matrix_4fv(mv_location, false, &mv_matrix);
-        gl.draw_elements(
-            gl::TRIANGLES,
-            self.num_elems,
-            gl::UNSIGNED_INT,
-            self.elem_start * (U32_SIZE as u32),
-        );
+
+        // Lighting properties
+        let ambient_location = gl.get_uniform_location(ctx.program, "uAmbientProduct");
+        let diffuse_location = gl.get_uniform_location(ctx.program, "uDiffuseProduct");
+        let specular_location = gl.get_uniform_location(ctx.program, "uSpecularProduct");
+        // Light position
+        let light_position_location = gl.get_uniform_location(ctx.program, "uLightPosition");
+        let shininess_location = gl.get_uniform_location(ctx.program, "uShininess");
+
+        // Set lighting properties
+        gl.uniform_4f(ambient_location, 0.0, 0.0, 0.0, 1.0);
+        gl.uniform_4f(diffuse_location, 0.64, 0.64, 0.64, 1.0);
+        gl.uniform_4f(specular_location, 0.0, 0.0, 0.0, 1.0);
+
+        gl.uniform_4f(light_position_location, 0.0, 1.0, 0.0, 1.0);
+
+        gl.uniform_1f(shininess_location, 96.078431);
+
+        gl.draw_arrays(gl::TRIANGLES, self.vert_start, self.num_verts / 8);
     }
 }
 
@@ -166,7 +149,7 @@ impl Color {
     pub fn from_hex(hex: &str) -> Result<Color, io::Error> {
         // Remove first character if it is '#'
         // TODO: better way to do this
-        let (_, hex) = if hex.chars().next() == Some('#') {
+        let (_, hex) = if hex.starts_with('#') {
             hex.split_at(1)
         } else {
             ("", hex)
@@ -251,40 +234,6 @@ mod test {
     }
 }
 
-pub struct Hat {
-    brim_inner_radius: f32,
-    brim_outer_radius: f32,
-    cone_bottom_radius: f32,
-    cone_height: f32,
-    subdivisions: usize,
-}
-
-impl Hat {
-    fn new(
-        brim_inner_radius: f32,
-        brim_outer_radius: f32,
-        cone_bottom_radius: f32,
-        cone_height: f32,
-        subdivisions: usize,
-    ) -> Self {
-        Hat {
-            brim_inner_radius,
-            brim_outer_radius,
-            cone_bottom_radius,
-            cone_height,
-            subdivisions,
-        }
-    }
-    /// Returns buffer data
-    pub fn buffer_data(&self, vertex_start: u32) -> (Vec<f32>, Vec<u32>) {
-        // Create buffers for vertices and elements
-        let vertices: Vec<f32> = Vec::new();
-        let buffer: Vec<u32> = Vec::new();
-        // Add points for
-        (vec![], vec![])
-    }
-}
-
 pub struct Desk {
     top_width: f32,
     top_height: f32,
@@ -292,9 +241,8 @@ pub struct Desk {
     leg_width: f32,
     leg_height: f32,
     leg_depth: f32,
-    pub elem_start: GLuint,
-    pub num_elems: GLsizei,
-    vert_start: GLuint,
+    vert_start: GLint,
+    num_verts: GLsizei,
 }
 
 impl Desk {
@@ -313,13 +261,12 @@ impl Desk {
             leg_width,
             leg_height,
             leg_depth,
-            elem_start: 0,
-            num_elems: 0,
             vert_start: 0,
+            num_verts: 0,
         }
     }
 }
-impl Drawable for Desk {
+/* impl Drawable for Desk {
     /// Returns buffer data
     fn buffer_data(&mut self, elem_start: GLuint, vertex_start: GLuint) -> (Vec<f32>, Vec<u32>) {
         // Create buffers for vertices and elements
@@ -446,7 +393,7 @@ impl Drawable for Desk {
             self.elem_start * (U32_SIZE as u32),
         );
     }
-}
+}*/
 
 // Helper functions
 /// Converts quad to tris
@@ -462,7 +409,7 @@ fn rectangular_prism(
     width: f32,
     height: f32,
     depth: f32,
-    vertex_start: GLuint,
+    vertex_start: GLint,
 ) -> (Vec<Vec3>, Vec<u32>) {
     // Easy access to self elements
     // Start by creating the table top
@@ -502,8 +449,7 @@ fn rectangular_prism(
         back_bottom_left,
         back_bottom_right,
         back_top_right,
-    ]
-    .iter()
+    ].iter()
     .map(|vert| vert + center)
     .collect();
     // Create buffer for elements

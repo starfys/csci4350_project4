@@ -9,7 +9,8 @@ mod render;
 
 use std::f32::consts::PI;
 use std::fs::File;
-use std::mem::size_of;
+use std::mem::{self, size_of};
+use std::ptr;
 
 use emscripten::{
     emscripten_GetProcAddress, emscripten_get_element_css_size, emscripten_set_main_loop_arg,
@@ -29,7 +30,6 @@ use render::{Color, Desk, Drawable, Obj};
 
 // Used for buffering data properly
 const FLOAT_SIZE: usize = size_of::<f32>();
-const U16_SIZE: usize = size_of::<u16>();
 const U32_SIZE: usize = size_of::<u32>();
 
 type GlPtr = std::rc::Rc<gl::Gl>;
@@ -83,8 +83,6 @@ impl Context {
         let gl = &self.gl;
         // Parse the model
         let mut cat = Obj::load("/cat.obj", vec3(0.0, 0.5, 0.0)).unwrap();
-        cat.set_group_color("".into(), Color::from_hex("a0522d").unwrap())
-            .unwrap();
         // Set head col;ors
         /*head.set_group_color("Head".into(), Color::from_hex("ffe0bd").unwrap())
             .unwrap();
@@ -99,11 +97,11 @@ impl Context {
         )
         .unwrap();*/
         // Load data from the head model
-        let (mut vertices, mut elements) = cat.buffer_data(0, 0);
+        let mut vertices = cat.buffer_data(0);
         // Add head to objects
         self.objects.push(Box::new(cat));
         // Create the table
-        let mut table = Desk::new(4.0, 4.0, 0.2, 0.2, 0.2, 3.0);
+        /*let mut table = Desk::new(4.0, 4.0, 0.2, 0.2, 0.2, 3.0);
         let (table_verts, table_elems) =
             table.buffer_data(elements.len() as GLuint, (vertices.len() / 6) as GLuint);
 
@@ -111,20 +109,23 @@ impl Context {
         elements.extend_from_slice(&table_elems);
 
         self.objects.push(Box::new(table));
-
+        */
         // Create gl data buffers
         let buffers = gl.gen_buffers(2);
         // Split into data and element buffers
         let vertex_buffer = buffers[0];
         let element_buffer = buffers[1];
-        // Pull shader var locations from the shader program
+        // Pull attribute locations from the shader program
         let position_location = gl.get_attrib_location(self.program, "aPosition") as u32;
-        let color_location = gl.get_attrib_location(self.program, "aColor") as u32;
+        let normal_location = gl.get_attrib_location(self.program, "aNormal") as u32;
+        let texture_location = gl.get_attrib_location(self.program, "aTexture") as u32;
         // Set up arrays for loading buffers
         let array = gl.gen_vertex_arrays(1)[0];
         gl.bind_vertex_array(array);
         gl.enable_vertex_attrib_array(position_location);
-        gl.enable_vertex_attrib_array(color_location);
+        gl.enable_vertex_attrib_array(normal_location);
+        gl.enable_vertex_attrib_array(texture_location);
+
         // Load vertex data into buffer
         gl.bind_buffer(gl::ARRAY_BUFFER, vertex_buffer);
         gl.buffer_data_untyped(
@@ -133,31 +134,34 @@ impl Context {
             vertices.as_ptr() as *const _,
             gl::STATIC_DRAW,
         );
-        // Set offsets and load information for vertex data
+        // Set offsets and load information for vertex positions
         gl.vertex_attrib_pointer(
             position_location,
             3,
             gl::FLOAT,
             false,
-            6 * FLOAT_SIZE as i32,
+            8 * FLOAT_SIZE as i32,
             0,
         );
+        // Set offsets and load information for vertex normals
         gl.vertex_attrib_pointer(
-            color_location,
+            normal_location,
             3,
             gl::FLOAT,
             false,
-            6 * FLOAT_SIZE as i32,
+            8 * FLOAT_SIZE as i32,
             3 * FLOAT_SIZE as u32,
         );
-        // Load element data into buffer
-        gl.bind_buffer(gl::ELEMENT_ARRAY_BUFFER, element_buffer);
-        gl.buffer_data_untyped(
-            gl::ELEMENT_ARRAY_BUFFER,
-            (U32_SIZE as isize) * (elements.len() as isize),
-            elements.as_ptr() as *const _,
-            gl::STATIC_DRAW,
+        // Set offsets and load information for vertex texture coordinates
+        gl.vertex_attrib_pointer(
+            texture_location,
+            2,
+            gl::FLOAT,
+            false,
+            8 * FLOAT_SIZE as i32,
+            6 * FLOAT_SIZE as u32,
         );
+        // ???
         gl.bind_vertex_array(0);
         // Return vertex array pointer
         self.buffer = Some(array);
@@ -171,13 +175,6 @@ impl Context {
         gl.attach_shader(program, v_shader);
         gl.attach_shader(program, f_shader);
         gl.link_program(program);
-        gl.use_program(program);
-        // Get positions
-        let position_location = gl.get_attrib_location(program, "aPosition") as u32;
-        let color_location = gl.get_attrib_location(program, "aColor") as u32;
-        // Configure position and color buffers for reading from arrays
-        gl.enable_vertex_attrib_array(position_location);
-        gl.enable_vertex_attrib_array(color_location);
         // Set gl to use a black background
         gl.clear_color(0.0, 0.0, 0.0, 1.0);
         // Enable depth testing
@@ -248,9 +245,9 @@ impl Context {
 
 fn get_canvas_size() -> (u32, u32) {
     unsafe {
-        let mut width = std::mem::uninitialized();
-        let mut height = std::mem::uninitialized();
-        emscripten_get_element_css_size(std::ptr::null(), &mut width, &mut height);
+        let mut width = mem::uninitialized();
+        let mut height = mem::uninitialized();
+        emscripten_get_element_css_size(ptr::null(), &mut width, &mut height);
         (width as u32, height as u32)
     }
 }
@@ -269,10 +266,10 @@ extern "C" fn loop_wrapper(ctx: *mut std::os::raw::c_void) {
 
 fn main() {
     unsafe {
-        let mut attributes: EmscriptenWebGLContextAttributes = std::mem::uninitialized();
+        let mut attributes: EmscriptenWebGLContextAttributes = mem::uninitialized();
         emscripten_webgl_init_context_attributes(&mut attributes);
         attributes.majorVersion = 2;
-        let handle = emscripten_webgl_create_context(std::ptr::null(), &attributes);
+        let handle = emscripten_webgl_create_context(ptr::null(), &attributes);
         emscripten_webgl_make_context_current(handle);
         let gl = gl::GlesFns::load_with(|addr| {
             let addr = std::ffi::CString::new(addr).unwrap();
@@ -286,21 +283,84 @@ fn main() {
     }
 }
 
-const VS_SRC: &[&[u8]] = &[b"#version 300 es
-layout(location = 0) in vec3 aPosition;
-layout(location = 1) in vec3 aColor;
-uniform mat4 uMVMatrix;
-uniform mat4 uPMatrix;
-out vec4 vColor;
-void main() {
-    gl_Position = uPMatrix * uMVMatrix * vec4(aPosition, 1.0);
-    vColor = vec4(aColor, 1.0);
-}"];
+#[cfg_attr(rustfmt, rustfmt_skip)]
+const VS_SRC: &[&[u8]] = &[
+b"#version 300 es
 
-const FS_SRC: &[&[u8]] = &[b"#version 300 es
+// Per-vertex attributes
+layout(location = 0) in vec3 aPosition;
+layout(location = 1) in vec3 aNormal;
+layout(location = 2) in vec2 aTexture;
+
+// All-vertex uniforms
+// MV matrix
+uniform mat4 uMVMatrix;
+// Perspective matrix
+uniform mat4 uPMatrix;
+// Lighting properties
+uniform vec4 uAmbientProduct;
+uniform vec4 uDiffuseProduct;
+uniform vec4 uSpecularProduct;
+// Light position
+uniform vec4 uLightPosition;
+uniform float uShininess;
+
+// Variable sent to fragment shader
+out vec4 vColor;
+
+
+void main() {
+    // Convert vertex and light position into camera coordinates
+    vec3 pos = -(uMVMatrix * vec4(aPosition, 1.0)).xyz;
+    // TODO: if this is uniform, why calculate it in each vertex
+    vec3 light = -(uMVMatrix * uLightPosition).xyz;
+
+    // light source direction
+    vec3 L = normalize(light - pos);
+    
+    // eye - point location  (eye is at origin of eye frame)
+    vec3 E = normalize(-pos); 
+    
+    // Half-way vector
+    vec3 H = normalize(L + E);
+
+    // Transform vertex normal into eye coordinates
+    vec3 N = normalize((uMVMatrix * vec4(aNormal, 1.0)).xyz);
+
+    // Compute terms in the illumination equation
+    
+    // ambient is already given
+    
+    float Kd = max(dot(L, N), 0.0);
+    vec4 diffuse = Kd * uDiffuseProduct;
+
+    float Ks = pow(max(dot(N, H), 0.0), uShininess);
+    vec4 specular = Ks * uSpecularProduct;
+    
+    if( dot(L, N) < 0.0 )  specular = vec4(0.0, 0.0, 0.0, 1.0);
+
+    gl_Position = uPMatrix * uMVMatrix * vec4(aPosition, 1.0);
+    
+    vColor = uAmbientProduct + diffuse + specular;
+
+    vColor.a = 1.0;
+}
+
+"
+];
+
+#[cfg_attr(rustfmt, rustfmt_skip)]
+const FS_SRC: &[&[u8]] = &[
+b"#version 300 es
+
 precision mediump float;
+
+
 in vec4 vColor;
+
 out vec4 oFragColor;
+
 void main() {
     oFragColor = vColor;
-}"];
+}
+"];
