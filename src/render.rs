@@ -10,94 +10,13 @@ use rand::Rng;
 
 use super::{Context, U32_SIZE};
 use error::io_error;
-use obj::{load_obj, vec3, Group, Vec3};
+use obj::{vec3, Vec3};
 
 pub trait Drawable {
     /// Returns buffer data
     fn buffer_data(&mut self, vertex_start: GLint) -> Vec<f32>;
     /// Draws the shape
     fn draw(&self, gl: &Context);
-}
-pub struct Obj {
-    groups: Vec<Group>,
-    vert_start: GLint,
-    num_verts: GLsizei,
-    center: Vec3,
-    translate: Vec3,
-}
-
-impl Obj {
-    /// Loads a render object from a path
-    pub fn load<P: AsRef<Path>>(path: P, translate: Vec3) -> Result<Self, io::Error> {
-        // Parse object file
-        let (groups, center) = load_obj(path)?;
-        // Generate the render object
-        Ok(Obj {
-            groups,
-            vert_start: 0,
-            num_verts: 0,
-            center,
-            translate,
-        })
-    }
-}
-impl Drawable for Obj {
-    /// Returns buffer data
-    fn buffer_data(&mut self, vertex_start: GLint) -> Vec<f32> {
-        // Store element start
-        self.vert_start = vertex_start;
-        // Store vertex data
-        let mut vertices: Vec<f32> = Vec::new();
-        // Store index data
-        let mut indices: Vec<u32> = Vec::new();
-        // Iterate over groups
-        for group in &self.groups {
-            // Extract data for the current group
-            let cur_vertices = group.to_vertices(Some(self.center));
-            // Add existing data
-            vertices.extend_from_slice(&cur_vertices);
-        }
-        // Store the number of vertices
-        self.num_verts = vertices.len() as GLsizei;
-        // Return vertices
-        vertices
-    }
-    /// Draws the object
-    fn draw(&self, ctx: &Context) {
-        let gl = &ctx.gl;
-        let mv_location = gl.get_uniform_location(ctx.program, "uMVMatrix");
-        /*let Vec3 {
-            x: c_x,
-            y: c_y,
-            z: c_z,
-        } = self.center;
-        let m_matrix = translate(-c_x, -c_y, -c_z);*/
-        let m_matrix = identity();
-        let Vec3 { x, y, z } = self.translate;
-        let m_matrix = matmul(translate(x, y, z), m_matrix);
-        let v_matrix = matmul(rotate_y(ctx.theta), ctx.camera);
-        let mv_matrix = matmul(v_matrix, m_matrix);
-        gl.uniform_matrix_4fv(mv_location, false, &mv_matrix);
-
-        // Lighting properties
-        let ambient_location = gl.get_uniform_location(ctx.program, "uAmbientProduct");
-        let diffuse_location = gl.get_uniform_location(ctx.program, "uDiffuseProduct");
-        let specular_location = gl.get_uniform_location(ctx.program, "uSpecularProduct");
-        // Light position
-        let light_position_location = gl.get_uniform_location(ctx.program, "uLightPosition");
-        let shininess_location = gl.get_uniform_location(ctx.program, "uShininess");
-
-        // Set lighting properties
-        gl.uniform_4f(ambient_location, 0.0, 0.0, 0.0, 1.0);
-        gl.uniform_4f(diffuse_location, 0.64, 0.64, 0.64, 1.0);
-        gl.uniform_4f(specular_location, 0.0, 0.0, 0.0, 1.0);
-
-        gl.uniform_4f(light_position_location, 0.0, 1.0, 0.0, 1.0);
-
-        gl.uniform_1f(shininess_location, 96.078431);
-
-        gl.draw_arrays(gl::TRIANGLES, self.vert_start, self.num_verts / 8);
-    }
 }
 
 #[derive(Debug, PartialEq)]

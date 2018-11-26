@@ -5,4 +5,5 @@ authors = ["Yosuke Onoue <onoue@likr-lab.com>", "Steven Sheffey <srs6p@mtmail.mt
 
 [dependencies]
 gleam = "0.6.6"
+image = "0.20.1"
 rand = "0.6.0-pre.1"

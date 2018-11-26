@@ -1,4 +1,5 @@
 extern crate gleam;
+extern crate image;
 extern crate rand;
 
 mod emscripten;
@@ -20,13 +21,14 @@ use emscripten::{
 
 use gleam::gl;
 use gleam::gl::{GLenum, GLuint};
+use image::{GenericImageView, Pixel};
 
 use matrix::{
     identity, matmul, orthogonal_matrix, perspective_matrix, rotate_x, rotate_y, scale, translate,
     viewing_matrix, Matrix44,
 };
-use obj::{vec3, Vec3};
-use render::{Color, Desk, Drawable, Obj};
+use obj::{vec3, Obj, Vec3};
+use render::{Color, Desk, Drawable};
 
 // Used for buffering data properly
 const FLOAT_SIZE: usize = size_of::<f32>();
@@ -83,6 +85,40 @@ impl Context {
         let gl = &self.gl;
         // Parse the model
         let mut cat = Obj::load("/cat.obj", vec3(0.0, 0.5, 0.0)).unwrap();
+        // Load the texture file
+        let cat_texture = image::open("/cat_diff.tga").unwrap();
+        // Extract dimensions
+        let (width, height) = cat_texture.dimensions();
+        // Get image as raw bytes
+        let cat_texture = cat_texture.as_rgb8().unwrap().clone();
+        let texture = gl.gen_textures(1)[0];
+
+        // load texture data in here
+
+        gl.active_texture(gl::TEXTURE0);
+        gl.bind_texture(gl::TEXTURE_2D_ARRAY, texture);
+        gl.tex_parameter_i(
+            gl::TEXTURE_2D_ARRAY,
+            gl::TEXTURE_MAG_FILTER,
+            gl::LINEAR as i32,
+        );
+        gl.tex_parameter_i(
+            gl::TEXTURE_2D_ARRAY,
+            gl::TEXTURE_MIN_FILTER,
+            gl::LINEAR as i32,
+        );
+        gl.tex_image_3d(
+            gl::TEXTURE_2D_ARRAY,
+            0,
+            gl::RGB as i32,
+            width as i32,
+            height as i32,
+            1,
+            0,
+            gl::RGB,
+            gl::UNSIGNED_BYTE,
+            Some(&cat_texture),
+        );
         // Set head col;ors
         /*head.set_group_color("Head".into(), Color::from_hex("ffe0bd").unwrap())
             .unwrap();

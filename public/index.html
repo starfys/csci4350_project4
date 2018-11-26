@@ -14,6 +14,7 @@ var Module = {
     // Pre-load asset files and mount them to directories
     preRun: function() {
         FS.createPreloadedFile('/', "cat.obj", 'cat.obj',  true, false);
+        FS.createPreloadedFile('/', "cat_diff.tga", 'cat_diff.tga',  true, false);
     }
 }
 // Start a request for the WASM code
