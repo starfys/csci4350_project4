@@ -99,8 +99,8 @@ impl Context {
         let mut cat = Obj::load("/cat.obj", vec3(5.0, 3.5, 5.0), 1).unwrap();
         self.objects.push(Box::new(cat));
 
-        let mut potion = Obj::load("/potion.obj", vec3(5.0, 3.5, 5.0), 1).unwrap();
-        self.objects.push(Box::new(potion));
+        //let mut potion = Obj::load("/potion.obj", vec3(5.0, 3.5, 5.0), 1).unwrap();
+        //self.objects.push(Box::new(potion));
 
         // Load the texture file
         /*let cat_texture = image::open("/cat_diff.tga").unwrap();
