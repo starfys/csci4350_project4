@@ -15,7 +15,7 @@ $ rustup update stable
 You should set an override for this project as well. Navigate into where this is is cloned to do that
 ```console
 $ cd csci4350_project4
-$ rustup set override stable
+$ rustup override set stable
 ```
 You need to install the rustup emscripten backend
 ```console
