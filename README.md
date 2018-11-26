@@ -10,16 +10,16 @@ Rust + WebAssembly + WebGL 2.0 project for CSCI4250 based on https://github.com/
 # Preparation
 This project runs on the current rust stable, so install that
 ```console
-rustup update stable
+$ rustup update stable
 ```
 You should set an override for this project as well. Navigate into where this is is cloned to do that
 ```console
-cd csci4350_project4
-rustup set override stable
+$ cd csci4350_project4
+$ rustup set override stable
 ```
 You need to install the rustup emscripten backend
 ```console
-rustup target add --toolchain stable wasm32-unknown-emscripten
+$ rustup target add --toolchain stable wasm32-unknown-emscripten
 ```
 
 # How to build
