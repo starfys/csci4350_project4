@@ -387,7 +387,7 @@ impl Drawable for Obj {
         // Store vertex data
         let mut vertices: Vec<f32> = Vec::new();
         // Store index data
-        let mut indices: Vec<u32> = Vec::new();
+        let _indices: Vec<u32> = Vec::new();
         // Iterate over groups
         for group in &self.groups {
             // Extract data for the current group

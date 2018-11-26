@@ -133,7 +133,7 @@ impl Context {
         )
         .unwrap();*/
         // Load data from the head model
-        let mut vertices = cat.buffer_data(0);
+        let vertices = cat.buffer_data(0);
         // Add head to objects
         self.objects.push(Box::new(cat));
         // Create the table
@@ -150,7 +150,7 @@ impl Context {
         let buffers = gl.gen_buffers(2);
         // Split into data and element buffers
         let vertex_buffer = buffers[0];
-        let element_buffer = buffers[1];
+        let _element_buffer = buffers[1];
         // Pull attribute locations from the shader program
         let position_location = gl.get_attrib_location(self.program, "aPosition") as u32;
         let normal_location = gl.get_attrib_location(self.program, "aNormal") as u32;
