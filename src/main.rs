@@ -1,6 +1,5 @@
 extern crate gleam;
 extern crate image;
-extern crate rand;
 
 mod desk;
 mod emscripten;

@@ -5,7 +5,6 @@ use std::path::Path;
 
 use gleam::gl;
 use gleam::gl::types::{GLint, GLsizei};
-use rand::Rng;
 
 use super::{Context, U32_SIZE};
 use error::io_error;
@@ -131,15 +130,6 @@ impl Color {
         };
         // Return final result
         Ok(Color { r, g, b, a })
-    }
-    fn random() -> Color {
-        let mut rng = rand::thread_rng();
-        Color {
-            r: rng.gen_range(0.0, 1.0),
-            g: rng.gen_range(0.0, 1.0),
-            b: rng.gen_range(0.0, 1.0),
-            a: 1.0,
-        }
     }
 }
 

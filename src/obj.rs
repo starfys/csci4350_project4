@@ -6,7 +6,6 @@ use std::str::FromStr;
 
 use gleam::gl;
 use gleam::gl::types::{GLint, GLsizei};
-use rand::Rng;
 
 use super::Context;
 use error::io_error;
