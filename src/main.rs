@@ -4,6 +4,7 @@ extern crate image;
 mod desk;
 mod emscripten;
 mod error;
+mod extrusion;
 mod matrix;
 mod obj;
 mod render;
@@ -98,6 +99,13 @@ impl Context {
         // Load the cat
         let mut cat = Obj::load("/cat.obj", vec3(5.0, 3.5, 5.0)).unwrap();
         self.objects.push(Box::new(cat));
+
+        let star = extrusion::Extrusion::new(vec![
+            vec3(6.0, 6.0, 6.0),
+            vec3(7.0, 6.0, 6.0),
+            vec3(6.0, 6.0, 7.0)
+        ], vec3(0.0, 2.0, 0.0));
+        self.objects.push(Box::new(star));
 
         // Load the texture file
         /*let cat_texture = image::open("/cat_diff.tga").unwrap();

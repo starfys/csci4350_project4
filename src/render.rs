@@ -191,6 +191,14 @@ pub fn quad(a: Vec3, b: Vec3, c: Vec3, d: Vec3) -> [Vertex; 6] {
     ]
 }
 
+pub fn polygon(vertices: &[Vec3]) -> Vec<Vertex> {
+   vertices.windows(3).flat_map(|vertices|{
+       let norm = &vec3(0.0, 0.0, 0.0) - ((&vertices[2] - vertices[0]).cross((&vertices[1] - vertices[0])));
+       vec![vertex(vertices[0], norm),
+       vertex(vertices[1], norm),
+       vertex(vertices[2], norm),]
+   }).collect()
+}
 /// Generates a rectangular_prism, cen
 pub fn rectangular_prism(center: Vec3, width: f32, height: f32, depth: f32) -> Vec<Vertex> {
     // Easy access to self elements
