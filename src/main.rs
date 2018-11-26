@@ -2,11 +2,13 @@ extern crate gleam;
 extern crate image;
 extern crate rand;
 
+mod desk;
 mod emscripten;
 mod error;
 mod matrix;
 mod obj;
 mod render;
+mod room;
 
 use std::f32::consts::PI;
 use std::fs::File;
@@ -20,15 +22,17 @@ use emscripten::{
 };
 
 use gleam::gl;
-use gleam::gl::{GLenum, GLuint};
+use gleam::gl::{GLenum, GLint, GLuint};
 use image::{GenericImageView, Pixel};
 
+use desk::Desk;
 use matrix::{
     identity, matmul, orthogonal_matrix, perspective_matrix, rotate_x, rotate_y, scale, translate,
-    viewing_matrix, Matrix44,
+    vec3, viewing_matrix, Matrix44, Vec3,
 };
-use obj::{vec3, Obj, Vec3};
-use render::{Color, Desk, Drawable};
+use obj::Obj;
+use render::{Color, Drawable};
+use room::Room;
 
 // Used for buffering data properly
 const FLOAT_SIZE: usize = size_of::<f32>();
@@ -83,10 +87,21 @@ fn load_shader(gl: &GlPtr, shader_type: GLenum, source: &[&[u8]]) -> Option<GLui
 impl Context {
     fn init_buffer(&mut self) {
         let gl = &self.gl;
-        // Parse the model
-        let mut cat = Obj::load("/cat.obj", vec3(0.0, 0.5, 0.0)).unwrap();
+
+        // Create the room
+        let mut room = Room::new(10.0, 10.0, 10.0);
+        self.objects.push(Box::new(room));
+
+        // Create the table
+        let mut table = Desk::new(4.0, 4.0, 0.2, 0.2, 0.2, 3.0, vec3(5.0, 0.0, 5.0));
+        self.objects.push(Box::new(table));
+
+        // Load the cat
+        let mut cat = Obj::load("/cat.obj", vec3(5.0, 3.5, 5.0)).unwrap();
+        self.objects.push(Box::new(cat));
+
         // Load the texture file
-        let cat_texture = image::open("/cat_diff.tga").unwrap();
+        /*let cat_texture = image::open("/cat_diff.tga").unwrap();
         // Extract dimensions
         let (width, height) = cat_texture.dimensions();
         // Get image as raw bytes
@@ -118,34 +133,24 @@ impl Context {
             gl::RGB,
             gl::UNSIGNED_BYTE,
             Some(&cat_texture),
-        );
-        // Set head col;ors
-        /*head.set_group_color("Head".into(), Color::from_hex("ffe0bd").unwrap())
-            .unwrap();
-        head.set_group_color(
-            "Eyes_Left_Eye_Ball".into(),
-            Color::from_hex("a1caf1").unwrap(),
-        )
-        .unwrap();
-        head.set_group_color(
-            "Eyes_Right_Eye_Ball".into(),
-            Color::from_hex("a1caf1").unwrap(),
-        )
-        .unwrap();*/
-        // Load data from the head model
-        let vertices = cat.buffer_data(0);
+        );*/
+
+        // Create a vertex buffer
+        let mut vertices: Vec<f32> = Vec::new();
+        // Buffer each object's data
+        for mut object in &mut self.objects {
+            let cur_verts = object.buffer_data(vertices.len() as GLint);
+            vertices.extend_from_slice(&cur_verts);
+        }
+
+        // Parse the model
+        //let mut potion = Obj::load("/potion.obj", vec3(5.5, 8.5, 5.5)).unwrap();
+        // Load data from the cat model
+        //let pot_verts = potion.buffer_data(vertices.len() as GLint);
+        //vertices.extend_from_slice(&pot_verts);
         // Add head to objects
-        self.objects.push(Box::new(cat));
-        // Create the table
-        /*let mut table = Desk::new(4.0, 4.0, 0.2, 0.2, 0.2, 3.0);
-        let (table_verts, table_elems) =
-            table.buffer_data(elements.len() as GLuint, (vertices.len() / 6) as GLuint);
+        //self.objects.push(Box::new(potion));
 
-        vertices.extend_from_slice(&table_verts);
-        elements.extend_from_slice(&table_elems);
-
-        self.objects.push(Box::new(table));
-        */
         // Create gl data buffers
         let buffers = gl.gen_buffers(2);
         // Split into data and element buffers
@@ -227,12 +232,16 @@ impl Context {
             // Set up view matrix
             camera: viewing_matrix(
                 // eye
-                [6.0, 3.0, 0.0],
+                vec3(10.0, 10.0, 10.0),
+                //vec3(0.0, 16.0, 0.0),
+                //vec3(10.0, 10.0, 10.0),
+                // vec3(0.0, 4.0, 0.0),
                 // up
-                [0.0, 1.0, 0.0],
-                //[0.0, 1.0, 0.0],
+                vec3(0.0, 1.0, 0.0),
+                //vec3(1.0, 0.0, 0.0),
+                //vec3(0.0, 0.0, 1.0),
                 // at
-                [0.0, 0.0, 0.0],
+                vec3(0.0, 0.0, 0.0),
             ),
             /*p_matrix: perspective_matrix(
                 // FOV
@@ -240,18 +249,18 @@ impl Context {
                 // Aspect ratio
                 width as f32 / height as f32,
                 // Near plane
-                0.01,
+                0.1,
                 // Far plane
                 1000.0,
             ),*/
             #[cfg_attr(rustfmt, rustfmt_skip)]
             p_matrix: orthogonal_matrix(
                 // Left, right
-                -6.0, 6.0,
+                -9.6, 9.6,
                 // Top, bottom
                 6.0, -6.0,
                 // Near, far
-                0.1, 1000.0
+                0.1, 100.0
             ),
             width,
             height,
@@ -270,6 +279,10 @@ impl Context {
         // Universally set perspective
         let p_location = gl.get_uniform_location(self.program, "uPMatrix");
         gl.uniform_matrix_4fv(p_location, false, &self.p_matrix);
+
+        let light_position_location = gl.get_uniform_location(self.program, "uLightPosition");
+        gl.uniform_4f(light_position_location, 0.1, 10.0, 0.1, 1.0);
+
         // Render each object
         gl.bind_vertex_array(self.buffer.unwrap());
         for object in &self.objects {
@@ -289,7 +302,7 @@ fn get_canvas_size() -> (u32, u32) {
 }
 
 fn step(ctx: &mut Context) {
-    ctx.theta -= 0.01;
+    //ctx.theta -= 0.01;
     ctx.draw();
 }
 

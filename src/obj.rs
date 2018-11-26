@@ -10,75 +10,8 @@ use rand::Rng;
 
 use super::Context;
 use error::io_error;
-use matrix::{identity, matmul, rotate_x, rotate_y, scale, translate};
+use matrix::{identity, matmul, rotate_x, rotate_y, scale, translate, vec2, vec3, Vec2, Vec3};
 use render::{Color, Drawable};
-
-#[derive(Copy, Clone, Debug)]
-pub struct Vec3 {
-    pub x: f32,
-    pub y: f32,
-    pub z: f32,
-}
-impl<'a> std::ops::Add<Vec3> for &'a Vec3 {
-    type Output = Vec3;
-
-    fn add(self, other: Vec3) -> Self::Output {
-        Vec3 {
-            x: self.x + other.x,
-            y: self.y + other.y,
-            z: self.z + other.z,
-        }
-    }
-}
-impl<'a> std::ops::Sub<Vec3> for &'a Vec3 {
-    type Output = Vec3;
-
-    fn sub(self, other: Vec3) -> Self::Output {
-        Vec3 {
-            x: self.x - other.x,
-            y: self.y - other.y,
-            z: self.z - other.z,
-        }
-    }
-}
-
-impl std::ops::Mul<f32> for Vec3 {
-    type Output = Vec3;
-    fn mul(self, other: f32) -> Self::Output {
-        Vec3 {
-            x: other * self.x,
-            y: other * self.y,
-            z: other * self.z,
-        }
-    }
-}
-
-pub fn vec3(x: f32, y: f32, z: f32) -> Vec3 {
-    Vec3 { x, y, z }
-}
-impl Vec3 {
-    pub fn origin() -> Vec3 {
-        Vec3 {
-            x: 0.0,
-            y: 0.0,
-            z: 0.0,
-        }
-    }
-}
-
-#[derive(Copy, Clone, Debug)]
-pub struct Vec2 {
-    pub x: f32,
-    pub y: f32,
-}
-pub fn vec2(x: f32, y: f32) -> Vec2 {
-    Vec2 { x, y }
-}
-impl Vec2 {
-    pub fn origin() -> Vec2 {
-        Vec2 { x: 0.0, y: 0.0 }
-    }
-}
 
 #[derive(Debug)]
 pub struct Face<T> {
@@ -136,10 +69,12 @@ where
             .map_err(io_error)?;
         let texture_index: Option<T> = tokens
             .next()
-            .map(|token| token.parse::<T>().unwrap_or_default());
+            .map(|token| token.parse::<T>().ok())
+            .unwrap_or(None);
         let normal_index: Option<T> = tokens
             .next()
-            .map(|token| token.parse::<T>().unwrap_or_default());
+            .map(|token| token.parse::<T>().ok())
+            .unwrap_or(None);
         Ok(FaceIndex {
             vertex_index,
             texture_index,
@@ -166,12 +101,12 @@ impl Group {
             faces: Vec::new(),
         }
     }
-    pub fn to_vertices(&self, center: Option<Vec3>) -> Vec<f32> {
+    pub fn to_vertices(&self, center: Option<Vec3>, translate: Option<Vec3>) -> Vec<f32> {
         // If center is not given, just use origin
         let center = center.unwrap_or_else(Vec3::origin);
+        let translate = translate.unwrap_or_else(Vec3::origin);
         // Generate vertex list from face list
-        self
-            .faces
+        self.faces
             .iter()
             // For each face, get the vertex, normal, and texture coordinates
             // of all its components
@@ -179,10 +114,10 @@ impl Group {
                 face.indices.iter().map(|index| {
                     (
                         // Get the vertex for this
-                        &self.vertices[(index.vertex_index - 1) as usize] - center,
+                        &(&self.vertices[(index.vertex_index - 1) as usize] - center) + translate,
                         index
                             .normal_index
-                            .map(|normal_index| self.normals[(normal_index  - 1) as usize])
+                            .map(|normal_index| self.normals[(normal_index - 1) as usize])
                             .unwrap_or_else(Vec3::origin),
                         index
                             .texture_index
@@ -193,14 +128,13 @@ impl Group {
             })
             // Flatten out everything
             .flat_map(|(vertex, normal, texture)| {
-                #[cfg_attr(rustfmt, rustfmt_skip)] 
+                #[cfg_attr(rustfmt, rustfmt_skip)]
                 vec![
                     vertex.x, vertex.y, vertex.z,
                     normal.x, normal.y, normal.z,
                     texture.x, texture.y,
                 ]
-            })
-            .collect()
+            }).collect()
     }
 }
 
@@ -218,7 +152,12 @@ impl<T> DrawInfo<T> {
     }
 }
 
-pub fn load_obj<P: AsRef<Path>>(path: P) -> Result<(Vec<Group>, Vec3), io::Error> {
+pub fn load_obj<P>(path: P) -> Result<(Vec<Group>, Vec3), io::Error>
+where
+    P: AsRef<Path> + std::fmt::Display,
+{
+    // Get the path as string for later
+    let path_str = path.to_string();
     // Read the obj file
     let obj_file = File::open(path)?;
     // Create reader for the file
@@ -334,10 +273,10 @@ pub fn load_obj<P: AsRef<Path>>(path: P) -> Result<(Vec<Group>, Vec3), io::Error
     groups.push(cur_group);
     // Average out the center
     let center = center * (1.0 / (num_vertices as f32));
+    println!("Center for {} is {:?}", path_str, center);
     // Return groups
     Ok((groups, center))
 }
-
 
 struct Material {
     /// Ka
@@ -346,13 +285,13 @@ struct Material {
     diffuse_color: Color,
     /// Ks
     specular_color: Color,
-    /// Ns 
+    /// Ns
     specular_exponent: f32,
     /// Ni
     optical_density: f32,
     /// d or Tr
     transparency: f32,
-    // TODO: illum 
+    // TODO: illum
     // TODO: maps
 }
 
@@ -366,7 +305,10 @@ pub struct Obj {
 
 impl Obj {
     /// Loads a render object from a path
-    pub fn load<P: AsRef<Path>>(path: P, translate: Vec3) -> Result<Self, io::Error> {
+    pub fn load<P>(path: P, translate: Vec3) -> Result<Self, io::Error>
+    where
+        P: AsRef<Path> + std::fmt::Display,
+    {
         // Parse object file
         let (groups, center) = load_obj(path)?;
         // Generate the render object
@@ -386,17 +328,15 @@ impl Drawable for Obj {
         self.vert_start = vertex_start;
         // Store vertex data
         let mut vertices: Vec<f32> = Vec::new();
-        // Store index data
-        let _indices: Vec<u32> = Vec::new();
         // Iterate over groups
         for group in &self.groups {
             // Extract data for the current group
-            let cur_vertices = group.to_vertices(Some(self.center));
+            let cur_vertices = group.to_vertices(Some(self.center), Some(self.translate));
             // Add existing data
             vertices.extend_from_slice(&cur_vertices);
         }
         // Store the number of vertices
-        self.num_verts = vertices.len() as GLsizei;
+        self.num_verts = (vertices.len() / 8) as GLsizei;
         // Return vertices
         vertices
     }
@@ -404,15 +344,7 @@ impl Drawable for Obj {
     fn draw(&self, ctx: &Context) {
         let gl = &ctx.gl;
         let mv_location = gl.get_uniform_location(ctx.program, "uMVMatrix");
-        /*let Vec3 {
-            x: c_x,
-            y: c_y,
-            z: c_z,
-        } = self.center;
-        let m_matrix = translate(-c_x, -c_y, -c_z);*/
         let m_matrix = identity();
-        let Vec3 { x, y, z } = self.translate;
-        let m_matrix = matmul(translate(x, y, z), m_matrix);
         let v_matrix = matmul(rotate_y(ctx.theta), ctx.camera);
         let mv_matrix = matmul(v_matrix, m_matrix);
         gl.uniform_matrix_4fv(mv_location, false, &mv_matrix);
@@ -422,18 +354,15 @@ impl Drawable for Obj {
         let diffuse_location = gl.get_uniform_location(ctx.program, "uDiffuseProduct");
         let specular_location = gl.get_uniform_location(ctx.program, "uSpecularProduct");
         // Light position
-        let light_position_location = gl.get_uniform_location(ctx.program, "uLightPosition");
         let shininess_location = gl.get_uniform_location(ctx.program, "uShininess");
 
         // Set lighting properties
-        gl.uniform_4f(ambient_location, 0.0, 0.0, 0.0, 1.0);
+        gl.uniform_4f(ambient_location, 0.3, 0.3, 0.3, 1.0);
         gl.uniform_4f(diffuse_location, 0.64, 0.64, 0.64, 1.0);
         gl.uniform_4f(specular_location, 0.0, 0.0, 0.0, 1.0);
 
-        gl.uniform_4f(light_position_location, 0.0, 1.0, 0.0, 1.0);
-
         gl.uniform_1f(shininess_location, 96.078431);
 
-        gl.draw_arrays(gl::TRIANGLES, self.vert_start, self.num_verts / 8);
+        gl.draw_arrays(gl::TRIANGLES, self.vert_start / 8, self.num_verts);
     }
 }
