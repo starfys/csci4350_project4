@@ -75,8 +75,11 @@ impl Drawable for Revolution {
     fn draw(&self, ctx: &Context) {
         let gl = &ctx.gl;
         let mv_location = gl.get_uniform_location(ctx.program, "uMVMatrix");
-        let m_matrix = translate(self.translate.x, self.translate.y, self.translate.z);
-        let v_matrix = ctx.camera;
+        let m_matrix = identity();
+        let v_matrix = matmul(
+            translate(self.translate.x, self.translate.y, self.translate.z),
+            ctx.camera,
+        );
         let mv_matrix = matmul(v_matrix, m_matrix);
         gl.uniform_matrix_4fv(mv_location, false, &mv_matrix);
 

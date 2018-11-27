@@ -101,6 +101,9 @@ impl Context {
         let room = Room::new(10.0, 10.0, 10.0);
         self.objects.push(Box::new(room));
 
+        let mirai = Obj::load("/girl.obj", vec3(0.5, 0.5, 0.5), vec3(6.0, 5.0, 1.0)).unwrap();
+        self.objects.push(Box::new(mirai));
+
         // Create the table
         let table = Desk::new(4.0, 4.0, 0.2, 0.2, 0.2, 3.0, vec3(5.0, 0.0, 5.0));
         self.objects.push(Box::new(table));
@@ -124,16 +127,17 @@ impl Context {
 
         #[cfg_attr(rustfmt, rustfmt_skip)]
         let rot = revolution::Revolution::new(vec![
-            vec3(1.0, 0.0, 0.0),
-            vec3(1.1, 0.15, 0.0),
-            vec3(1.0, 0.2, 0.0),
-            vec3(0.8, 0.3, 0.0),
-            vec3(0.3, 0.5, 0.0),
-            vec3(0.3, 0.9, 0.0),
-            vec3(0.35, 0.95, 0.0),
-            vec3(0.3, 0.9, 0.0),
-        ], 200, vec3(5.0, 4.0, 7.0));
+            vec3(0.5, 0.0, 0.0),
+            vec3(0.55, 0.15, 0.0),
+            vec3(0.5, 0.2, 0.0),
+            vec3(0.4, 0.3, 0.0),
+            vec3(0.15, 0.5, 0.0),
+            vec3(0.15, 0.9, 0.0),
+            vec3(0.175, 0.95, 0.0),
+            vec3(0.15, 0.9, 0.0),
+        ], 200, vec3(3.8, 3.3, 5.3));
         self.objects.push(Box::new(rot));
+
         //let mut potion = Obj::load("/potion.obj", vec3(5.0, 3.5, 5.0), 1).unwrap();
         //self.objects.push(Box::new(potion));
 
