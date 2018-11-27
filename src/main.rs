@@ -8,6 +8,7 @@ mod extrusion;
 mod matrix;
 mod obj;
 mod render;
+mod revolution;
 mod room;
 
 use std::f32::consts::PI;
@@ -89,20 +90,39 @@ impl Context {
         let gl = &self.gl;
 
         // Create the room
-        let mut room = Room::new(10.0, 10.0, 10.0);
+        let room = Room::new(10.0, 10.0, 10.0);
         self.objects.push(Box::new(room));
 
         // Create the table
-        let mut table = Desk::new(4.0, 4.0, 0.2, 0.2, 0.2, 3.0, vec3(5.0, 0.0, 5.0));
+        let table = Desk::new(4.0, 4.0, 0.2, 0.2, 0.2, 3.0, vec3(5.0, 0.0, 5.0));
         self.objects.push(Box::new(table));
 
         // Load the cat
-        let mut cat = Obj::load("/cat.obj", vec3(5.0, 3.5, 5.0)).unwrap();
+        let cat = Obj::load("/cat.obj", vec3(1.0, 1.0, 1.0), vec3(5.0, 3.5, 5.0)).unwrap();
         self.objects.push(Box::new(cat));
 
         let star =
             extrusion::Extrusion::new(star(5, 0.3, 1.0), vec3(0.0, 0.5, 0.0), vec3(5.0, 8.0, 5.0));
         self.objects.push(Box::new(star));
+
+        let staff = Obj::load("/staff.obj", vec3(1.0, 1.0, 1.0), vec3(7.0, 3.0, 7.0)).unwrap();
+        self.objects.push(Box::new(staff));
+
+        #[cfg_attr(rustfmt, rustfmt_skip)]
+        let rot = revolution::Revolution::new(vec![
+            vec3(1.0, 0.0, 0.0),
+            vec3(1.1, 0.15, 0.0),
+            vec3(1.0, 0.2, 0.0),
+            vec3(0.8, 0.3, 0.0),
+            vec3(0.3, 0.5, 0.0),
+            vec3(0.3, 0.9, 0.0),
+            vec3(0.35, 0.95, 0.0),
+            vec3(0.3, 0.9, 0.0),
+        ], 200, vec3(5.0, 4.0, 7.0));
+        self.objects.push(Box::new(rot));
+        //let mut potion = Obj::load("/potion.obj", vec3(5.0, 3.5, 5.0), 1).unwrap();
+        //self.objects.push(Box::new(potion));
+
 
         // Load the texture file
         /*let cat_texture = image::open("/cat_diff.tga").unwrap();
@@ -111,9 +131,9 @@ impl Context {
         // Get image as raw bytes
         let cat_texture = cat_texture.as_rgb8().unwrap().clone();
         let texture = gl.gen_textures(1)[0];
-
+        
         // load texture data in here
-
+        
         gl.active_texture(gl::TEXTURE0);
         gl.bind_texture(gl::TEXTURE_2D_ARRAY, texture);
         gl.tex_parameter_i(
@@ -236,14 +256,17 @@ impl Context {
             // Set up view matrix
             camera: viewing_matrix(
                 // eye
-                vec3(10.0, 10.0, 10.0),
+
+                //vec3(12.0, 12.0, 12.0),
                 //vec3(5.0, 10.0, 5.0),
-                //vec3(10.0, 10.0, 10.0),
-                // vec3(0.0, 4.0, 0.0),
+                //vec3(0.0, 5.0, 0.0),
+                //vec3(0.0, 10.0, 0.0),
+                vec3(10.0, 0.0, 0.0),
+                //vec3(0.0, 0.0, 10.0),
+
                 // up
-                vec3(0.0, 1.0, 0.0),
                 //vec3(1.0, 0.0, 0.0),
-                //vec3(0.0, 0.0, 1.0),
+                vec3(0.0, 1.0, 0.0),
                 // at
                 vec3(0.0, 0.0, 0.0),
                 //vec3(5.0, 0.0, 5.0),
@@ -265,7 +288,7 @@ impl Context {
                 // Top, bottom
                 6.0, -6.0,
                 // Near, far
-                0.1, 100.0
+                0.1, 1000.0
             ),
             width,
             height,
@@ -286,7 +309,7 @@ impl Context {
         gl.uniform_matrix_4fv(p_location, false, &self.p_matrix);
 
         let light_position_location = gl.get_uniform_location(self.program, "uLightPosition");
-        gl.uniform_4f(light_position_location, 0.1, 10.0, 0.1, 1.0);
+        gl.uniform_3f(light_position_location, 0.5, 12.0, 0.5);
 
         // Render each object
         gl.bind_vertex_array(self.buffer.unwrap());
@@ -356,7 +379,7 @@ uniform vec4 uAmbientProduct;
 uniform vec4 uDiffuseProduct;
 uniform vec4 uSpecularProduct;
 // Light position
-uniform vec4 uLightPosition;
+uniform vec3 uLightPosition;
 uniform float uShininess;
 
 // Variable sent to fragment shader
@@ -367,7 +390,7 @@ void main() {
     // Convert vertex and light position into camera coordinates
     vec3 pos = -(uMVMatrix * vec4(aPosition, 1.0)).xyz;
     // TODO: if this is uniform, why calculate it in each vertex
-    vec3 light = -(uMVMatrix * uLightPosition).xyz;
+    vec3 light = -(uMVMatrix * vec4(uLightPosition, 1.0)).xyz;
 
     // light source direction
     vec3 L = normalize(light - pos);

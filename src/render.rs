@@ -173,6 +173,17 @@ mod test {
 }
 
 // Helper functions
+/// Generates a tri
+/// a--d
+/// |  |
+/// b--c
+pub fn tri(a: Vec3, b: Vec3, c: Vec3) -> [Vertex; 3] {
+    // Calculate normal from a corner
+    let norm = &vec3(0.0, 0.0, 0.0) - ((&c - a).cross(&b - a));
+
+    [vertex(a, norm), vertex(b, norm), vertex(c, norm)]
+}
+// Helper functions
 /// Converts quad to tris
 /// a--d
 /// |  |
@@ -275,5 +286,6 @@ pub fn rectangular_prism(center: Vec3, width: f32, height: f32, depth: f32) -> V
                 normal: *normal,
                 texture: *texture,
             },
-        ).collect()
+        )
+        .collect()
 }

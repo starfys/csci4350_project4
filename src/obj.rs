@@ -30,9 +30,9 @@ where
                 &self.indices[3],
                 &self.indices[0],
             ]
-                .iter()
-                .map(|face_index| face_index.vertex_index.clone())
-                .collect()
+            .iter()
+            .map(|face_index| face_index.vertex_index.clone())
+            .collect()
         } else {
             self.indices
                 .windows(3)
@@ -85,55 +85,14 @@ where
 #[derive(Debug)]
 pub struct Group {
     pub name: String,
-    pub vertices: Vec<Vec3>,
-    pub normals: Vec<Vec3>,
-    pub texture_coords: Vec<Vec2>,
     pub faces: Vec<Face<u32>>,
 }
 impl Group {
     pub fn new(name: &str) -> Self {
         Group {
             name: name.into(),
-            vertices: Vec::new(),
-            normals: Vec::new(),
-            texture_coords: Vec::new(),
             faces: Vec::new(),
         }
-    }
-    pub fn to_vertices(&self, center: Option<Vec3>, translate: Option<Vec3>) -> Vec<f32> {
-        // If center is not given, just use origin
-        let center = center.unwrap_or_else(Vec3::origin);
-        let translate = translate.unwrap_or_else(Vec3::origin);
-        // Generate vertex list from face list
-        self.faces
-            .iter()
-            // For each face, get the vertex, normal, and texture coordinates
-            // of all its components
-            .flat_map(|face| {
-                face.indices.iter().map(|index| {
-                    (
-                        // Get the vertex for this
-                        &(&self.vertices[(index.vertex_index - 1) as usize] - center) + translate,
-                        index
-                            .normal_index
-                            .map(|normal_index| self.normals[(normal_index - 1) as usize])
-                            .unwrap_or_else(Vec3::origin),
-                        index
-                            .texture_index
-                            .map(|texture_index| self.texture_coords[(texture_index - 1) as usize])
-                            .unwrap_or_else(Vec2::origin),
-                    )
-                })
-            })
-            // Flatten out everything
-            .flat_map(|(vertex, normal, texture)| {
-                #[cfg_attr(rustfmt, rustfmt_skip)]
-                vec![
-                    vertex.x, vertex.y, vertex.z,
-                    normal.x, normal.y, normal.z,
-                    texture.x, texture.y,
-                ]
-            }).collect()
     }
 }
 
@@ -149,132 +108,6 @@ impl<T> DrawInfo<T> {
             indices: Vec::new(),
         }
     }
-}
-
-pub fn load_obj<P>(path: P) -> Result<(Vec<Group>, Vec3), io::Error>
-where
-    P: AsRef<Path> + std::fmt::Display,
-{
-    // Get the path as string for later
-    let path_str = path.to_string();
-    // Read the obj file
-    let obj_file = File::open(path)?;
-    // Create reader for the file
-    let obj_file = BufReader::new(obj_file);
-    // Create list of groups
-    let mut groups: Vec<Group> = Vec::new();
-    // current group
-    let mut cur_group: Group = Group::new("");
-    // Keep track of center
-    let mut center: Vec3 = Vec3::origin();
-    // Keep track of vertices for averaging center
-    // Float is used here for division
-    let mut num_vertices: f32 = 0.0;
-
-    for line in obj_file.lines() {
-        // Unwrap the line
-        let line = line?;
-        // Ignore comments
-        if line.starts_with('#') {
-            continue;
-        }
-        // Split line into tokens
-        let mut tokens = line.split_whitespace();
-        // Read the first token
-        let ty = match tokens.next() {
-            Some(token) => token,
-            // Skip empty lines
-            None => {
-                continue;
-            }
-        };
-        // Handle it
-        match ty {
-            "g" => {
-                // Read group name
-                let name = tokens.next().unwrap_or("unnamed");
-                // Insert old group into groups
-                if !cur_group.vertices.is_empty() {
-                    groups.push(cur_group);
-                }
-                // Create new group
-                cur_group = Group::new(name);
-            }
-            "v" => {
-                // Read coordinates
-                let x: f32 = tokens
-                    .next()
-                    .unwrap_or_else(|| "0")
-                    .parse()
-                    .unwrap_or_else(|_| 0.0);
-                let y: f32 = tokens
-                    .next()
-                    .unwrap_or_else(|| "0")
-                    .parse()
-                    .unwrap_or_else(|_| 0.0);
-                let z: f32 = tokens
-                    .next()
-                    .unwrap_or_else(|| "0")
-                    .parse()
-                    .unwrap_or_else(|_| 0.0);
-                // Collect into a vector
-                let v = vec3(x, y, z);
-                // Factor vertex into the center
-                center = &center + v;
-                // Add to number of vertices
-                num_vertices += 1.0;
-                // Add vector into the list
-                cur_group.vertices.push(v);
-            }
-            "vn" => {
-                // Read coordinates
-                let x: f32 = tokens
-                    .next()
-                    .unwrap_or_else(|| "0")
-                    .parse()
-                    .unwrap_or_else(|_| 0.0);
-                let y: f32 = tokens
-                    .next()
-                    .unwrap_or_else(|| "0")
-                    .parse()
-                    .unwrap_or_else(|_| 0.0);
-                let z: f32 = tokens
-                    .next()
-                    .unwrap_or_else(|| "0")
-                    .parse()
-                    .unwrap_or_else(|_| 0.0);
-                cur_group.normals.push(vec3(x, y, z));
-            }
-            "vt" => {
-                // Read coordinates
-                let x: f32 = tokens
-                    .next()
-                    .unwrap_or_else(|| "0")
-                    .parse()
-                    .unwrap_or_else(|_| 0.0);
-                let y: f32 = tokens
-                    .next()
-                    .unwrap_or_else(|| "0")
-                    .parse()
-                    .unwrap_or_else(|_| 0.0);
-                cur_group.texture_coords.push(vec2(x, y));
-            }
-            "f" => {
-                let face_indices = tokens.map(FaceIndex::from_str).flatten().collect();
-                cur_group.faces.push(face(face_indices));
-            }
-            other => {
-                eprintln!("Unhandled line type: {}", other);
-            }
-        }
-    }
-    // Push the last group
-    groups.push(cur_group);
-    // Average out the center
-    let center = center * (1.0 / (num_vertices as f32));
-    println!("Center for {} is {:?}", path_str, center);
-    // Return groups
-    Ok((groups, center))
 }
 
 struct Material {
@@ -298,26 +131,191 @@ pub struct Obj {
     groups: Vec<Group>,
     vert_start: GLint,
     num_verts: GLsizei,
+    pub vertices: Vec<Vec3>,
+    pub normals: Vec<Vec3>,
+    pub texture_coords: Vec<Vec2>,
     center: Vec3,
+    scale: Vec3,
     translate: Vec3,
 }
 
 impl Obj {
     /// Loads a render object from a path
-    pub fn load<P>(path: P, translate: Vec3) -> Result<Self, io::Error>
+    pub fn load<P>(path: P, scale: Vec3, translate: Vec3) -> Result<Self, io::Error>
     where
         P: AsRef<Path> + std::fmt::Display,
     {
-        // Parse object file
-        let (groups, center) = load_obj(path)?;
+        // Get the path as string for later
+        let path_str = path.to_string();
+        // Read the obj file
+        let obj_file = File::open(path)?;
+        // Create reader for the file
+        let obj_file = BufReader::new(obj_file);
+        // Buffers for data
+        let mut vertices: Vec<Vec3> = Vec::new();
+        let mut normals: Vec<Vec3> = Vec::new();
+        let mut texture_coords: Vec<Vec2> = Vec::new();
+        // Create list of groups
+        let mut groups: Vec<Group> = Vec::new();
+        // current group
+        let mut cur_group: Group = Group::new("");
+        // Keep track of center
+        let mut center: Vec3 = Vec3::origin();
+        // Keep track of vertices for averaging center
+        // Float is used here for division
+        let mut num_vertices: f32 = 0.0;
+
+        for line in obj_file.lines() {
+            // Unwrap the line
+            let line = line?;
+            // Ignore comments
+            if line.starts_with('#') {
+                continue;
+            }
+            // Split line into tokens
+            let mut tokens = line.split_whitespace();
+            // Read the first token
+            let ty = match tokens.next() {
+                Some(token) => token,
+                // Skip empty lines
+                None => {
+                    continue;
+                }
+            };
+            // Handle it
+            match ty {
+                "g" => {
+                    // Read group name
+                    let name = tokens.next().unwrap_or("unnamed");
+                    // Insert old group into groups
+                    if !cur_group.faces.is_empty() {
+                        groups.push(cur_group);
+                    }
+                    // Create new group
+                    cur_group = Group::new(name);
+                }
+                "v" => {
+                    // Read coordinates
+                    let x: f32 = tokens
+                        .next()
+                        .unwrap_or_else(|| "0")
+                        .parse()
+                        .unwrap_or_else(|_| 0.0);
+                    let y: f32 = tokens
+                        .next()
+                        .unwrap_or_else(|| "0")
+                        .parse()
+                        .unwrap_or_else(|_| 0.0);
+                    let z: f32 = tokens
+                        .next()
+                        .unwrap_or_else(|| "0")
+                        .parse()
+                        .unwrap_or_else(|_| 0.0);
+                    // Collect into a vector
+                    let v = vec3(x, y, z);
+                    // Factor vertex into the center
+                    center = &center + v;
+                    // Add to number of vertices
+                    num_vertices += 1.0;
+                    // Add vector into the list
+                    vertices.push(v);
+                }
+                "vn" => {
+                    // Read coordinates
+                    let x: f32 = tokens
+                        .next()
+                        .unwrap_or_else(|| "0")
+                        .parse()
+                        .unwrap_or_else(|_| 0.0);
+                    let y: f32 = tokens
+                        .next()
+                        .unwrap_or_else(|| "0")
+                        .parse()
+                        .unwrap_or_else(|_| 0.0);
+                    let z: f32 = tokens
+                        .next()
+                        .unwrap_or_else(|| "0")
+                        .parse()
+                        .unwrap_or_else(|_| 0.0);
+                    normals.push(vec3(x, y, z));
+                }
+                "vt" => {
+                    // Read coordinates
+                    let x: f32 = tokens
+                        .next()
+                        .unwrap_or_else(|| "0")
+                        .parse()
+                        .unwrap_or_else(|_| 0.0);
+                    let y: f32 = tokens
+                        .next()
+                        .unwrap_or_else(|| "0")
+                        .parse()
+                        .unwrap_or_else(|_| 0.0);
+                    texture_coords.push(vec2(x, y));
+                }
+                "f" => {
+                    let face_indices = tokens.map(FaceIndex::from_str).flatten().collect();
+                    cur_group.faces.push(face(face_indices));
+                }
+                other => {
+                    eprintln!("Unhandled line type: {}", other);
+                }
+            }
+        }
+        // Push the last group
+        groups.push(cur_group);
+        // Average out the center
+        let center = center * (1.0 / (num_vertices as f32));
+        println!("Center for {} is {:?}", path_str, center);
         // Generate the render object
         Ok(Obj {
             groups,
             vert_start: 0,
             num_verts: 0,
+            vertices,
+            normals,
+            texture_coords,
             center,
+            scale,
             translate,
         })
+    }
+
+    pub fn to_vertices(&self, group: &Group) -> Vec<f32> {
+        // Generate vertex list from face list
+        group
+            .faces
+            .iter()
+            // For each face, get the vertex, normal, and texture coordinates
+            // of all its components
+            .flat_map(|face| {
+                face.indices.iter().map(|index| {
+                    (
+                        // Get the vertex for this
+                        (&(&self.vertices[(index.vertex_index - 1) as usize] - self.center)
+                            + self.translate)
+                            .scale(self.scale.x, self.scale.y, self.scale.z),
+                        index
+                            .normal_index
+                            .map(|normal_index| self.normals[(normal_index - 1) as usize])
+                            .unwrap_or_else(Vec3::origin),
+                        index
+                            .texture_index
+                            .map(|texture_index| self.texture_coords[(texture_index - 1) as usize])
+                            .unwrap_or_else(Vec2::origin),
+                    )
+                })
+            })
+            // Flatten out everything
+            .flat_map(|(vertex, normal, texture)| {
+                #[cfg_attr(rustfmt, rustfmt_skip)]
+                vec![
+                    vertex.x, vertex.y, vertex.z,
+                    normal.x, normal.y, normal.z,
+                    texture.x, texture.y,
+                ]
+            })
+            .collect()
     }
 }
 impl Drawable for Obj {
@@ -330,7 +328,7 @@ impl Drawable for Obj {
         // Iterate over groups
         for group in &self.groups {
             // Extract data for the current group
-            let cur_vertices = group.to_vertices(Some(self.center), Some(self.translate));
+            let cur_vertices = self.to_vertices(group);
             // Add existing data
             vertices.extend_from_slice(&cur_vertices);
         }
@@ -340,6 +338,7 @@ impl Drawable for Obj {
         vertices
     }
     /// Draws the object
+    // Return groups
     fn draw(&self, ctx: &Context) {
         let gl = &ctx.gl;
         let mv_location = gl.get_uniform_location(ctx.program, "uMVMatrix");
@@ -364,4 +363,9 @@ impl Drawable for Obj {
 
         gl.draw_arrays(gl::TRIANGLES, self.vert_start / 8, self.num_verts);
     }
+}
+
+#[test]
+fn test_obj() {
+    let mut staff = Obj::load("public/staff.obj", vec3(5.0, 3.5, 5.0)).unwrap();
 }
