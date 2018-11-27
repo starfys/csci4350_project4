@@ -69,6 +69,22 @@ impl Vec3 {
             z: self.z / sum,
         }
     }
+
+    pub fn scale(&self, x: f32, y: f32, z: f32) -> Vec3 {
+        Vec3 {
+            x: self.x * x,
+            y: self.y * y,
+            z: self.z * z,
+        }
+    }
+
+    pub fn rotate_y(&self, theta: f32) -> Vec3 {
+        Vec3 {
+            x: self.x * theta.cos() + self.z * theta.sin(),
+            y: self.y,
+            z: -self.x * theta.sin() + self.z * theta.cos(),
+        }
+    }
 }
 
 #[derive(Copy, Clone, Debug)]
