@@ -1,6 +1,7 @@
 extern crate gleam;
 extern crate image;
 
+mod chair;
 mod desk;
 mod emscripten;
 mod error;
@@ -26,6 +27,7 @@ use gleam::gl;
 use gleam::gl::{GLenum, GLint, GLuint};
 use image::{GenericImageView, Pixel};
 
+use chair::Chair;
 use desk::Desk;
 use matrix::{
     identity, matmul, orthogonal_matrix, perspective_matrix, rotate_x, rotate_y, scale, translate,
@@ -96,6 +98,12 @@ impl Context {
         // Create the table
         let table = Desk::new(4.0, 4.0, 0.2, 0.2, 0.2, 3.0, vec3(5.0, 0.0, 5.0));
         self.objects.push(Box::new(table));
+
+        let chair = Chair::new(1.0, 1.0, 0.2, 0.2, 0.2, 3.0, vec3(2.0, 0.0, 3.5));
+        self.objects.push(Box::new(chair));
+
+        let chair2 = Chair::new(1.0, 1.0, 0.2, 0.2, 0.2, 3.0, vec3(2.0, 0.0, 5.5));
+        self.objects.push(Box::new(chair2));
 
         // Load the cat
         let cat = Obj::load("/cat.obj", vec3(1.0, 1.0, 1.0), vec3(5.0, 3.5, 5.0)).unwrap();
@@ -259,7 +267,6 @@ impl Context {
                 //vec3(5.0, 10.0, 5.0),
                 //vec3(0.0, 5.0, 0.0),
                 //vec3(0.0, 10.0, 0.0),
-                //vec3(10.0, 0.0, 0.0),
                 //vec3(0.0, 0.0, 10.0),
 
                 // up
