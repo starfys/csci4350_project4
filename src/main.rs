@@ -99,7 +99,7 @@ impl Context {
         let table = Desk::new(4.0, 4.0, 0.2, 0.2, 0.2, 3.0, vec3(5.0, 0.0, 5.0));
         self.objects.push(Box::new(table));
 
-        let chair = Chair::new(1.0, 1.0, 0.2, 0.2, 0.2, 3.0, vec3(5.5, 0.0, 2.0));
+        let chair = Chair::new(1.0, 1.0, 0.2, 0.2, 0.2, 3.0, vec3(2.0, 0.0, 3.5));
         self.objects.push(Box::new(chair));
 
         let chair2 = Chair::new(1.0, 1.0, 0.2, 0.2, 0.2, 3.0, vec3(2.0, 0.0, 5.5));

@@ -108,19 +108,19 @@ impl Drawable for Chair {
         // Add vertices and indices
         vertices.extend_from_slice(&fr_leg_vertices);
         // Back of chair
-        /*let back_vertices = rectangular_prism(
+        let back_vertices = rectangular_prism(
             &vec3(
                 -self.top_width / 2.0 + self.leg_width / 2.0,
-                (self.leg_depth / 2.0) + 2.0,
-                self.top_height / 2.0,
+                (self.leg_depth / 2.0) + self.leg_depth / 2.0,
+                (self.top_height / 2.0 - self.leg_height / 2.0) - 0.2,
             ) + self.translate,
+            self.leg_width,
             self.top_width,
-            self.leg_height / 2.0,
-            self.leg_depth / 2.0,
+            self.leg_depth / 4.0,
         );
 
         vertices.extend_from_slice(&back_vertices);
-        */
+        
 
         // Vertices
         self.num_verts = vertices.len() as GLint;
