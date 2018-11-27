@@ -86,11 +86,11 @@ impl Drawable for Room {
         let shininess_location = gl.get_uniform_location(ctx.program, "uShininess");
 
         // Set lighting properties
-        gl.uniform_4f(ambient_location, 0.6, 0.6, 0.6, 1.0);
-        gl.uniform_4f(diffuse_location, 0.64, 0.64, 0.64, 1.0);
-        gl.uniform_4f(specular_location, 0.0, 0.0, 0.0, 1.0);
+        gl.uniform_4f(ambient_location, 0.25, 0.20725, 0.20725, 1.0);
+        gl.uniform_4f(diffuse_location, 1.0, 0.829, 0.829, 1.0);
+        gl.uniform_4f(specular_location, 0.296648, 0.296648, 0.296648, 1.0);
 
-        gl.uniform_1f(shininess_location, 40.078431);
+        gl.uniform_1f(shininess_location, 0.088 * 128.0);
 
         gl.draw_arrays(gl::TRIANGLES, self.vert_start / 8, self.num_verts);
     }

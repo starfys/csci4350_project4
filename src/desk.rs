@@ -135,11 +135,11 @@ impl Drawable for Desk {
         let shininess_location = gl.get_uniform_location(ctx.program, "uShininess");
 
         // Set lighting properties
-        gl.uniform_4f(ambient_location, 0.396, 0.263, 0.129, 1.0);
-        gl.uniform_4f(diffuse_location, 0.64, 0.64, 0.64, 1.0);
-        gl.uniform_4f(specular_location, 0.0, 0.0, 0.0, 1.0);
+        gl.uniform_4f(ambient_location, 0.2125, 0.1275, 0.054, 1.0);
+        gl.uniform_4f(diffuse_location, 0.714, 0.4284, 0.18144, 1.0);
+        gl.uniform_4f(specular_location, 0.393548, 0.271906, 0.166721, 1.0);
 
-        gl.uniform_1f(shininess_location, 96.078431);
+        gl.uniform_1f(shininess_location, 0.2 * 128.0);
 
         gl.draw_arrays(gl::TRIANGLES, self.vert_start / 8, self.num_verts);
     }
