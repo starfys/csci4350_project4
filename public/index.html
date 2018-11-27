@@ -7,6 +7,8 @@
 <body>
 <canvas width="600" height="480"/>
 <script>
+// Global var that stores whether the animation should happen
+let animate = 0;
 // Module is used frequently by emscripten
 var Module = {
     // Used to easily access canvas from the code
@@ -22,7 +24,12 @@ var Module = {
 // Set up an event listener for the a key
 addEventListener('keypress', (event) => {
     if(event.key.toUpperCase() == 'A') {
-        console.log("Animate");
+        if(animate == 0) {
+            animate = 1;
+        }
+        else if(animate == 1) {
+            animate = 0;
+        }
     }
 });
 // Start a request for the WASM code

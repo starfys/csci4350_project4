@@ -56,4 +56,6 @@ extern "C" {
         width: *mut f64,
         height: *mut f64,
     ) -> c_int;
+
+    pub fn emscripten_asm_const_int(code: *const c_char, ...) -> c_int;
 }

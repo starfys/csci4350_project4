@@ -59,7 +59,6 @@ pub struct Context {
     width: u32,
     height: u32,
     objects: Vec<Box<Drawable>>,
-    animate: bool,
 }
 
 fn load_shader(gl: &GlPtr, shader_type: GLenum, source: &[&[u8]]) -> Option<GLuint> {
@@ -304,7 +303,6 @@ impl Context {
             width,
             height,
             objects: Vec::new(),
-            animate: false,
         }
     }
 
@@ -343,17 +341,10 @@ fn get_canvas_size() -> (u32, u32) {
 
 fn step(ctx: &mut Context) {
     // Check whether we should animate
-    let code = "{return animate;}\0";
+    // try this
+    let code = "return animate;\0";
     let animate = unsafe { emscripten_asm_const_int(code.as_ptr() as *const _) };
-    // Set animation state
-    if animate == 0 && ctx.animate == true {
-        ctx.animate = false;
-    } else if animate == 1 && ctx.animate == false {
-        ctx.animate = true;
-    }
-    if ctx.animate {
-        ctx.theta -= 0.1;
-    }
+    ctx.theta -= 0.01;
     ctx.draw();
 }
 
