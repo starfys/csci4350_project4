@@ -8,15 +8,17 @@ pub struct Extrusion {
     extrusion: Vec3,
     vert_start: GLint,
     num_verts: GLsizei,
+    translate: Vec3,
 }
 
 impl Extrusion {
-    pub fn new(points: Vec<Vec3>, extrusion: Vec3) -> Self {
+    pub fn new(points: Vec<Vec3>, extrusion: Vec3, translate: Vec3) -> Self {
         Extrusion {
             points,
             extrusion,
             vert_start: 0,
             num_verts: 0,
+            translate,
         }
     }
 }
@@ -27,14 +29,18 @@ impl Drawable for Extrusion {
 
         let mut vertices: Vec<Vertex> = polygon(&self.points);
 
-        let top_verts: Vec<Vec3> = self
+        let points: Vec<Vec3> = self
             .points
+            .iter()
+            .map(|point| point + self.translate)
+            .collect();
+
+        let top_verts: Vec<Vec3> = points
             .iter()
             .map(|vert| vert + self.extrusion)
             .collect();
 
-        let sides: Vec<Vertex> = self
-            .points
+        let sides: Vec<Vertex> = points
             .windows(2)
             .zip(top_verts.windows(2))
             .cycle()

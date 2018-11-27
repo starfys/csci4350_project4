@@ -31,7 +31,7 @@ use matrix::{
     vec3, viewing_matrix, Matrix44, Vec3,
 };
 use obj::Obj;
-use render::{Color, Drawable};
+use render::{Color, Drawable, star};
 use room::Room;
 
 // Used for buffering data properly
@@ -100,11 +100,7 @@ impl Context {
         let mut cat = Obj::load("/cat.obj", vec3(5.0, 3.5, 5.0)).unwrap();
         self.objects.push(Box::new(cat));
 
-        let star = extrusion::Extrusion::new(vec![
-            vec3(6.0, 6.0, 6.0),
-            vec3(7.0, 6.0, 6.0),
-            vec3(6.0, 6.0, 7.0)
-        ], vec3(0.0, 2.0, 0.0));
+        let star = extrusion::Extrusion::new(star(5, 0.3, 1.0), vec3(0.0, 0.5, 0.0), vec3(5.0, 8.0, 5.0));
         self.objects.push(Box::new(star));
 
         // Load the texture file
@@ -240,7 +236,7 @@ impl Context {
             camera: viewing_matrix(
                 // eye
                 vec3(10.0, 10.0, 10.0),
-                //vec3(0.0, 16.0, 0.0),
+                //vec3(5.0, 10.0, 5.0),
                 //vec3(10.0, 10.0, 10.0),
                 // vec3(0.0, 4.0, 0.0),
                 // up
@@ -249,6 +245,7 @@ impl Context {
                 //vec3(0.0, 0.0, 1.0),
                 // at
                 vec3(0.0, 0.0, 0.0),
+                //vec3(5.0, 0.0, 5.0),
             ),
             /*p_matrix: perspective_matrix(
                 // FOV
