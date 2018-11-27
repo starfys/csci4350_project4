@@ -326,5 +326,6 @@ impl Drawable for Obj {
 
 #[test]
 fn test_obj() {
-    let mut staff = Obj::load("public/staff.obj", vec3(5.0, 3.5, 5.0)).unwrap();
+    let mut staff =
+        Obj::load("public/staff.obj", vec3(0.1, 0.1, 0.1), vec3(5.0, 3.5, 5.0)).unwrap();
 }
