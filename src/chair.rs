@@ -47,7 +47,11 @@ impl Drawable for Chair {
         let mut vertices: Vec<Vertex> = Vec::new();
         // Generate vertices for table top
         let top_vertices = rectangular_prism(
-            &vec3(0.0, (self.leg_depth + self.top_depth / 2.0) - self.leg_depth / 4.0, 0.0) + self.translate,
+            &vec3(
+                0.0,
+                (self.leg_depth + self.top_depth / 2.0) - self.leg_depth / 4.0,
+                0.0,
+            ) + self.translate,
             self.top_width,
             self.top_height,
             self.top_depth,
@@ -120,7 +124,6 @@ impl Drawable for Chair {
         );
 
         vertices.extend_from_slice(&back_vertices);
-        
 
         // Vertices
         self.num_verts = vertices.len() as GLint;

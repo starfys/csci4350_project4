@@ -219,7 +219,7 @@ pub fn polygon(vertices: &[Vec3]) -> Vec<Vertex> {
 pub fn star(num_points: u16, in_radius: f32, out_radius: f32) -> Vec<Vec3> {
     let theta = PI / f32::from(num_points);
 
-    (0..num_points+1)
+    (0..num_points + 1)
         .flat_map(|i| {
             let i = f32::from(i);
             vec![
@@ -286,6 +286,5 @@ pub fn rectangular_prism(center: Vec3, width: f32, height: f32, depth: f32) -> V
                 normal: *normal,
                 texture: *texture,
             },
-        )
-        .collect()
+        ).collect()
 }
