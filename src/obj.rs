@@ -30,9 +30,9 @@ where
                 &self.indices[3],
                 &self.indices[0],
             ]
-            .iter()
-            .map(|face_index| face_index.vertex_index.clone())
-            .collect()
+                .iter()
+                .map(|face_index| face_index.vertex_index.clone())
+                .collect()
         } else {
             self.indices
                 .windows(3)
@@ -314,8 +314,7 @@ impl Obj {
                     normal.x, normal.y, normal.z,
                     texture.x, texture.y,
                 ]
-            })
-            .collect()
+            }).collect()
     }
 }
 impl Drawable for Obj {
@@ -354,13 +353,11 @@ impl Drawable for Obj {
         // Light position
         let shininess_location = gl.get_uniform_location(ctx.program, "uShininess");
 
-        // Set lighting properties
-        gl.uniform_4f(ambient_location, 0.3, 0.3, 0.3, 1.0);
-        gl.uniform_4f(diffuse_location, 0.64, 0.64, 0.64, 1.0);
-        gl.uniform_4f(specular_location, 0.0, 0.0, 0.0, 1.0);
+        gl.uniform_4f(ambient_location, 0.4, 0.8, 0.8, 1.0);
+        gl.uniform_4f(diffuse_location, 0.75164, 0.60648, 0.22648, 1.0);
+        gl.uniform_4f(specular_location, 0.628281, 0.555802, 0.366065, 1.0);
 
-        gl.uniform_1f(shininess_location, 96.078431);
-
+        gl.uniform_1f(shininess_location, 0.4 * 128.0);
         gl.draw_arrays(gl::TRIANGLES, self.vert_start / 8, self.num_verts);
     }
 }
