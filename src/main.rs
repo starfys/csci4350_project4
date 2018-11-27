@@ -4,6 +4,7 @@ extern crate image;
 mod desk;
 mod emscripten;
 mod error;
+mod extrusion;
 mod matrix;
 mod obj;
 mod render;
@@ -31,7 +32,7 @@ use matrix::{
     vec3, viewing_matrix, Matrix44, Vec3,
 };
 use obj::Obj;
-use render::{Color, Drawable};
+use render::{star, Color, Drawable};
 use room::Room;
 
 // Used for buffering data properly
@@ -100,6 +101,10 @@ impl Context {
         let cat = Obj::load("/cat.obj", vec3(1.0, 1.0, 1.0), vec3(5.0, 3.5, 5.0)).unwrap();
         self.objects.push(Box::new(cat));
 
+        let star =
+            extrusion::Extrusion::new(star(5, 0.3, 1.0), vec3(0.0, 0.5, 0.0), vec3(5.0, 8.0, 5.0));
+        self.objects.push(Box::new(star));
+
         let staff = Obj::load("/staff.obj", vec3(1.0, 1.0, 1.0), vec3(7.0, 3.0, 7.0)).unwrap();
         self.objects.push(Box::new(staff));
 
@@ -117,6 +122,7 @@ impl Context {
         self.objects.push(Box::new(rot));
         //let mut potion = Obj::load("/potion.obj", vec3(5.0, 3.5, 5.0), 1).unwrap();
         //self.objects.push(Box::new(potion));
+
 
         // Load the texture file
         /*let cat_texture = image::open("/cat_diff.tga").unwrap();
@@ -250,17 +256,20 @@ impl Context {
             // Set up view matrix
             camera: viewing_matrix(
                 // eye
+
                 //vec3(12.0, 12.0, 12.0),
                 //vec3(5.0, 10.0, 5.0),
                 //vec3(0.0, 5.0, 0.0),
                 //vec3(0.0, 10.0, 0.0),
                 vec3(10.0, 0.0, 0.0),
                 //vec3(0.0, 0.0, 10.0),
+
                 // up
                 //vec3(1.0, 0.0, 0.0),
                 vec3(0.0, 1.0, 0.0),
                 // at
                 vec3(0.0, 0.0, 0.0),
+                //vec3(5.0, 0.0, 5.0),
             ),
             /*p_matrix: perspective_matrix(
                 // FOV
@@ -321,7 +330,7 @@ fn get_canvas_size() -> (u32, u32) {
 }
 
 fn step(ctx: &mut Context) {
-    //ctx.theta -= 0.01;
+    ctx.theta -= 0.01;
     ctx.draw();
 }
 

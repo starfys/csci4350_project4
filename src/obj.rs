@@ -343,7 +343,7 @@ impl Drawable for Obj {
         let gl = &ctx.gl;
         let mv_location = gl.get_uniform_location(ctx.program, "uMVMatrix");
         let m_matrix = identity();
-        let v_matrix = matmul(rotate_y(ctx.theta), ctx.camera);
+        let v_matrix = ctx.camera;
         let mv_matrix = matmul(v_matrix, m_matrix);
         gl.uniform_matrix_4fv(mv_location, false, &mv_matrix);
 

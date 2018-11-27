@@ -202,6 +202,41 @@ pub fn quad(a: Vec3, b: Vec3, c: Vec3, d: Vec3) -> [Vertex; 6] {
     ]
 }
 
+pub fn polygon(vertices: &[Vec3]) -> Vec<Vertex> {
+    vertices
+        .windows(3)
+        .flat_map(|vertices| {
+            let norm = &vec3(0.0, 0.0, 0.0)
+                - ((&vertices[2] - vertices[0]).cross(&vertices[1] - vertices[0]));
+            vec![
+                vertex(vertices[0], norm),
+                vertex(vertices[1], norm),
+                vertex(vertices[2], norm),
+            ]
+        }).collect()
+}
+
+pub fn star(num_points: u16, in_radius: f32, out_radius: f32) -> Vec<Vec3> {
+    let theta = PI / f32::from(num_points);
+
+    (0..num_points+1)
+        .flat_map(|i| {
+            let i = f32::from(i);
+            vec![
+                vec3(
+                    in_radius * (i * theta * 2.0).cos(),
+                    0.0,
+                    in_radius * (i * theta * 2.0).sin(),
+                ),
+                vec3(
+                    out_radius * (i * theta * 2.0 + 1.0).cos(),
+                    0.0,
+                    out_radius * (i * theta * 2.0 + 1.0).sin(),
+                ),
+                vec3(0.0, 0.0, 0.0),
+            ]
+        }).collect()
+}
 /// Generates a rectangular_prism, cen
 pub fn rectangular_prism(center: Vec3, width: f32, height: f32, depth: f32) -> Vec<Vertex> {
     // Easy access to self elements
