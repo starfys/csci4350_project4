@@ -26,25 +26,20 @@ impl Extrusion {
 impl Drawable for Extrusion {
     fn buffer_data(&mut self, vertex_start: GLint) -> Vec<f32> {
         self.vert_start = vertex_start;
+        let mut vertices: Vec<Vertex> = polygon(&self.points);
 
-        let points: Vec<Vec3> = self
+        let top_verts: Vec<Vec3> = self
             .points
-            .iter()
-            .map(|point| point + self.translate)
-            .collect();
-        
-        let mut vertices: Vec<Vertex> = polygon(&points);
-
-        let top_verts: Vec<Vec3> = points
             .iter()
             .map(|vert| vert + self.extrusion)
             .collect();
 
-        let sides: Vec<Vertex> = points
+        let sides: Vec<Vertex> = self
+            .points
             .windows(2)
             .zip(top_verts.windows(2))
             .cycle()
-            .take(points.len())
+            .take(self.points.len())
             .flat_map(|(b, t)| quad(t[0], b[0], b[1], t[1]).to_vec())
             .collect();
 
@@ -64,7 +59,13 @@ impl Drawable for Extrusion {
         let gl = &ctx.gl;
         let mv_location = gl.get_uniform_location(ctx.program, "uMVMatrix");
         let m_matrix = identity(); //translate(self.translate.x, self.translate.y, self.translate.z);
-        let v_matrix = matmul(rotate_y(ctx.theta), ctx.camera); //matmul(rotate_y(ctx.theta), ctx.camera);
+        let v_matrix = matmul(
+            rotate_y(ctx.theta),
+            matmul(
+                translate(self.translate.x, self.translate.y, self.translate.z),
+                ctx.camera,
+            ),
+        ); //matmul(rotate_y(ctx.theta), ctx.camera);
         let mv_matrix = matmul(v_matrix, m_matrix);
         gl.uniform_matrix_4fv(mv_location, false, &mv_matrix);
 

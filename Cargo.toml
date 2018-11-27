@@ -4,5 +4,5 @@ version = "0.1.0"
 authors = ["Yosuke Onoue <onoue@likr-lab.com>", "Steven Sheffey <srs6p@mtmail.mtsu.edu>"]
 
 [dependencies]
-gleam = "0.6.6"
+gleam = "0.6.8"
 image = "0.20.1"

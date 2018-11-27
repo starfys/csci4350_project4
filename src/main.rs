@@ -123,7 +123,6 @@ impl Context {
         //let mut potion = Obj::load("/potion.obj", vec3(5.0, 3.5, 5.0), 1).unwrap();
         //self.objects.push(Box::new(potion));
 
-
         // Load the texture file
         /*let cat_texture = image::open("/cat_diff.tga").unwrap();
         // Extract dimensions
@@ -256,12 +255,11 @@ impl Context {
             // Set up view matrix
             camera: viewing_matrix(
                 // eye
-
-                //vec3(12.0, 12.0, 12.0),
+                vec3(12.0, 12.0, 12.0),
                 //vec3(5.0, 10.0, 5.0),
                 //vec3(0.0, 5.0, 0.0),
                 //vec3(0.0, 10.0, 0.0),
-                vec3(10.0, 0.0, 0.0),
+                //vec3(10.0, 0.0, 0.0),
                 //vec3(0.0, 0.0, 10.0),
 
                 // up
