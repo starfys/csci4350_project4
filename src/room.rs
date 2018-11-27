@@ -1,7 +1,7 @@
 use super::Context;
 use gleam::gl::{self, GLint, GLsizei};
-use matrix::{identity, matmul, rotate_y, translate, vec3, Vec3};
-use render::{quad, rectangular_prism, Color, Drawable, Vertex};
+use matrix::{identity, matmul, vec3};
+use render::{quad, Drawable, Vertex};
 
 pub struct Room {
     room_width: f32,
@@ -62,11 +62,10 @@ impl Drawable for Room {
         self.num_verts = vertices.len() as GLint;
 
         // Flatten vertices and add colors
-        let vertices = vertices
+        vertices
             .iter()
             .flat_map(|vertex| vertex.to_data().to_vec())
-            .collect();
-        vertices
+            .collect()
     }
     /// Draws the object
     fn draw(&self, ctx: &Context) {
@@ -82,13 +81,12 @@ impl Drawable for Room {
         let diffuse_location = gl.get_uniform_location(ctx.program, "uDiffuseProduct");
         let specular_location = gl.get_uniform_location(ctx.program, "uSpecularProduct");
         // Light position
-        let light_position_location = gl.get_uniform_location(ctx.program, "uLightPosition");
         let shininess_location = gl.get_uniform_location(ctx.program, "uShininess");
 
         // Set lighting properties
         gl.uniform_4f(ambient_location, 0.25, 0.20725, 0.20725, 1.0);
         gl.uniform_4f(diffuse_location, 1.0, 0.829, 0.829, 1.0);
-        gl.uniform_4f(specular_location, 0.296648, 0.296648, 0.296648, 1.0);
+        gl.uniform_4f(specular_location, 0.296_648, 0.296_648, 0.296_648, 1.0);
 
         gl.uniform_1f(shininess_location, 0.088 * 128.0);
 

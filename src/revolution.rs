@@ -3,8 +3,8 @@ use std::f32::consts::PI;
 use gleam::gl::{self, GLint, GLsizei};
 
 use super::Context;
-use matrix::{identity, matmul, rotate_y, translate, vec3, Vec3};
-use render::{quad, rectangular_prism, tri, Color, Drawable, Vertex};
+use matrix::{identity, matmul, translate, vec3, Vec3};
+use render::{quad, tri, Drawable, Vertex};
 
 /// Takes a path and rotates it about the Y axis
 pub struct Revolution {
@@ -65,11 +65,10 @@ impl Drawable for Revolution {
         // Vertices
         self.num_verts = vertices.len() as GLint;
         // Flatten vertices and add colors
-        let vertices = vertices
+        vertices
             .iter()
             .flat_map(|vertex| vertex.to_data().to_vec())
-            .collect();
-        vertices
+            .collect()
     }
     /// Draws the object
     fn draw(&self, ctx: &Context) {
@@ -95,7 +94,7 @@ impl Drawable for Revolution {
         gl.uniform_4f(ambient_location, 0.6, 0.0, 0.0, 1.0);
         gl.uniform_4f(diffuse_location, 0.64, 0.64, 0.64, 1.0);
         gl.uniform_4f(specular_location, 0.0, 0.0, 0.0, 1.0);
-        gl.uniform_1f(shininess_location, 40.078431);
+        gl.uniform_1f(shininess_location, 40.078_43);
 
         gl.draw_arrays(gl::TRIANGLES, self.vert_start / 8, self.num_verts);
     }

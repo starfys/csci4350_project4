@@ -16,32 +16,6 @@ use render::{Color, Drawable};
 pub struct Face<T> {
     indices: Vec<FaceIndex<T>>,
 }
-impl<T> Face<T>
-where
-    T: Clone,
-{
-    fn to_triangles(&self) -> Vec<T> {
-        if self.indices.len() == 4 {
-            [
-                &self.indices[0],
-                &self.indices[1],
-                &self.indices[2],
-                &self.indices[2],
-                &self.indices[3],
-                &self.indices[0],
-            ]
-                .iter()
-                .map(|face_index| face_index.vertex_index.clone())
-                .collect()
-        } else {
-            self.indices
-                .windows(3)
-                .flatten()
-                .map(|face_index| face_index.vertex_index.clone())
-                .collect()
-        }
-    }
-}
 fn face<T>(indices: Vec<FaceIndex<T>>) -> Face<T> {
     Face { indices }
 }
@@ -92,20 +66,6 @@ impl Group {
         Group {
             name: name.into(),
             faces: Vec::new(),
-        }
-    }
-}
-
-pub struct DrawInfo<T> {
-    pub vertices: Vec<f32>,
-    pub indices: Vec<T>,
-}
-
-impl<T> DrawInfo<T> {
-    fn empty() -> Self {
-        DrawInfo {
-            vertices: Vec::new(),
-            indices: Vec::new(),
         }
     }
 }
@@ -314,7 +274,8 @@ impl Obj {
                     normal.x, normal.y, normal.z,
                     texture.x, texture.y,
                 ]
-            }).collect()
+            })
+            .collect()
     }
 }
 impl Drawable for Obj {
@@ -358,6 +319,7 @@ impl Drawable for Obj {
         gl.uniform_4f(specular_location, 0.628281, 0.555802, 0.366065, 1.0);
 
         gl.uniform_1f(shininess_location, 0.4 * 128.0);
+
         gl.draw_arrays(gl::TRIANGLES, self.vert_start / 8, self.num_verts);
     }
 }

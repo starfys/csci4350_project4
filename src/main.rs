@@ -17,7 +17,6 @@ pub extern "C" fn hello() {
 }
 
 use std::f32::consts::PI;
-use std::fs::File;
 use std::mem::{self, size_of};
 use std::ptr;
 
@@ -30,21 +29,17 @@ use emscripten::{
 
 use gleam::gl;
 use gleam::gl::{GLenum, GLint, GLuint};
-use image::{GenericImageView, Pixel};
+//use image::{GenericImageView, Pixel};
 
 use chair::Chair;
 use desk::Desk;
-use matrix::{
-    identity, matmul, orthogonal_matrix, perspective_matrix, rotate_x, rotate_y, scale, translate,
-    vec3, viewing_matrix, Matrix44, Vec3,
-};
+use matrix::{orthogonal_matrix, perspective_matrix, vec3, viewing_matrix, Matrix44, Vec3};
 use obj::Obj;
-use render::{star, Color, Drawable};
+use render::{star, Drawable};
 use room::Room;
 
 // Used for buffering data properly
 const FLOAT_SIZE: usize = size_of::<f32>();
-const U32_SIZE: usize = size_of::<u32>();
 
 type GlPtr = std::rc::Rc<gl::Gl>;
 
@@ -350,9 +345,9 @@ fn step(ctx: &mut Context) {
     let code = "{return animate;}\0";
     let animate = unsafe { emscripten_asm_const_int(code.as_ptr() as *const _) };
     // Set animation state
-    if animate == 0 && ctx.animate == true {
+    if animate == 0 && ctx.animate {
         ctx.animate = false;
-    } else if animate == 1 && ctx.animate == false {
+    } else if animate == 1 && ctx.animate {
         ctx.animate = true;
     }
     if ctx.animate {

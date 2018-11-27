@@ -6,7 +6,7 @@ use std::path::Path;
 use gleam::gl;
 use gleam::gl::types::{GLint, GLsizei};
 
-use super::{Context, U32_SIZE};
+use super::Context;
 use error::io_error;
 use matrix::{identity, matmul, rotate_x, rotate_y, scale, translate, vec3, Vec2, Vec3};
 
@@ -213,13 +213,14 @@ pub fn polygon(vertices: &[Vec3]) -> Vec<Vertex> {
                 vertex(vertices[1], norm),
                 vertex(vertices[2], norm),
             ]
-        }).collect()
+        })
+        .collect()
 }
 
 pub fn star(num_points: u16, in_radius: f32, out_radius: f32) -> Vec<Vec3> {
     let theta = PI / f32::from(num_points);
 
-    (0..num_points + 1)
+    (0..=num_points)
         .flat_map(|i| {
             let i = f32::from(i);
             vec![
@@ -235,7 +236,8 @@ pub fn star(num_points: u16, in_radius: f32, out_radius: f32) -> Vec<Vec3> {
                 ),
                 vec3(0.0, 0.0, 0.0),
             ]
-        }).collect()
+        })
+        .collect()
 }
 /// Generates a rectangular_prism, cen
 pub fn rectangular_prism(center: Vec3, width: f32, height: f32, depth: f32) -> Vec<Vertex> {
@@ -286,5 +288,6 @@ pub fn rectangular_prism(center: Vec3, width: f32, height: f32, depth: f32) -> V
                 normal: *normal,
                 texture: *texture,
             },
-        ).collect()
+        )
+        .collect()
 }

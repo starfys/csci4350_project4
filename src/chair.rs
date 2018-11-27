@@ -129,11 +129,10 @@ impl Drawable for Chair {
         self.num_verts = vertices.len() as GLint;
 
         // Flatten vertices and add colors
-        let vertices = vertices
+        vertices
             .iter()
             .flat_map(|vertex| vertex.to_data().to_vec())
-            .collect();
-        vertices
+            .collect()
     }
     /// Draws the object
     fn draw(&self, ctx: &Context) {
@@ -156,7 +155,7 @@ impl Drawable for Chair {
         gl.uniform_4f(diffuse_location, 0.64, 0.64, 0.64, 1.0);
         gl.uniform_4f(specular_location, 0.0, 0.0, 0.0, 1.0);
 
-        gl.uniform_1f(shininess_location, 96.078431);
+        gl.uniform_1f(shininess_location, 96.078_43);
 
         gl.draw_arrays(gl::TRIANGLES, self.vert_start / 8, self.num_verts);
     }
