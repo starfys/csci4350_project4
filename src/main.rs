@@ -347,9 +347,10 @@ fn step(ctx: &mut Context) {
     // Set animation state
     if animate == 0 && ctx.animate {
         ctx.animate = false;
-    } else if animate == 1 && ctx.animate {
+    } else if animate == 1 && !ctx.animate {
         ctx.animate = true;
     }
+    // Apply animation
     if ctx.animate {
         ctx.theta -= 0.1;
     }
