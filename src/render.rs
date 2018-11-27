@@ -206,22 +206,21 @@ pub fn polygon(vertices: &[Vec3]) -> Vec<Vertex> {
 }
 
 pub fn star(num_points: u16, in_radius: f32, out_radius: f32) -> Vec<Vec3> {
-    let vertices: Vec<Vec3> = Vec::new();
     let theta = PI / f32::from(num_points);
 
-    (0..num_points)
+    (0..num_points+1)
         .flat_map(|i| {
             let i = f32::from(i);
             vec![
                 vec3(
-                    out_radius * (i * theta * 2.0).cos(),
+                    in_radius * (i * theta * 2.0).cos(),
                     0.0,
-                    out_radius * (i * theta * 2.0).sin(),
+                    in_radius * (i * theta * 2.0).sin(),
                 ),
                 vec3(
-                    in_radius * (i * theta * 2.0 + 1.0).cos(),
+                    out_radius * (i * theta * 2.0 + 1.0).cos(),
                     0.0,
-                    in_radius * (i * theta * 2.0 + 1.0).sin(),
+                    out_radius * (i * theta * 2.0 + 1.0).sin(),
                 ),
                 vec3(0.0, 0.0, 0.0),
             ]

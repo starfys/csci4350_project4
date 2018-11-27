@@ -31,7 +31,7 @@ use matrix::{
     vec3, viewing_matrix, Matrix44, Vec3,
 };
 use obj::Obj;
-use render::{Color, Drawable, star};
+use render::{star, Color, Drawable};
 use room::Room;
 
 // Used for buffering data properly
@@ -100,7 +100,8 @@ impl Context {
         let mut cat = Obj::load("/cat.obj", vec3(5.0, 3.5, 5.0)).unwrap();
         self.objects.push(Box::new(cat));
 
-        let star = extrusion::Extrusion::new(star(5, 0.3, 1.0), vec3(0.0, 0.5, 0.0), vec3(5.0, 8.0, 5.0));
+        let star =
+            extrusion::Extrusion::new(star(5, 0.3, 1.0), vec3(0.0, 0.5, 0.0), vec3(5.0, 8.0, 5.0));
         self.objects.push(Box::new(star));
 
         // Load the texture file
@@ -306,7 +307,7 @@ fn get_canvas_size() -> (u32, u32) {
 }
 
 fn step(ctx: &mut Context) {
-    //ctx.theta -= 0.01;
+    ctx.theta -= 0.01;
     ctx.draw();
 }
 
