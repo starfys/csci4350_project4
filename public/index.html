@@ -6,7 +6,7 @@
 </head>
 <body>
 <div>
-<canvas width="600" height="480"/>
+<canvas width="1920" height="1080"/>
 </div>
 <div>
     <a href="https://github.com/starfys/csci4350_project4">Source</a>
@@ -18,6 +18,8 @@ let animate = 0;
 var Module = {
     // Used to easily access canvas from the code
     canvas: document.querySelector('canvas'),
+    // Disable pre-decoding
+    noImageDecoding: true,
     // Pre-load asset files and mount them to directories
     preRun: function() {
         FS.createPreloadedFile('/', "cat.obj", 'cat.obj',  true, false);
@@ -25,7 +27,9 @@ var Module = {
         //FS.createPreloadedFile('/', "potion.obj", 'potion.obj',  true, false);
         FS.createPreloadedFile('/', "staff.obj", 'staff.obj',  true, false);
         FS.createPreloadedFile('/', "girl.obj", 'girl.obj',  true, false);
+        FS.createPreloadedFile('/', "girl_texture.tga", 'girl_texture.tga',  true, false);
     }
+
 }
 // Set up an event listener for the a key
 addEventListener('keypress', (event) => {

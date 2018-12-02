@@ -26,9 +26,9 @@ use emscripten::{
     emscripten_webgl_init_context_attributes, emscripten_webgl_make_context_current,
     EmscriptenWebGLContextAttributes,
 };
-
 use gleam::gl;
 use gleam::gl::{GLenum, GLint, GLuint};
+use image::GenericImageView;
 //use image::{GenericImageView, Pixel};
 
 use chair::Chair;
@@ -137,39 +137,38 @@ impl Context {
         //self.objects.push(Box::new(potion));
 
         // Load the texture file
-        /*let cat_texture = image::open("/cat_diff.tga").unwrap();
+        //let cat_texture = image::open("/cat_diff.tga").unwrap();
+        let cat_texture = image::open("/girl_texture.tga").unwrap();
+
         // Extract dimensions
         let (width, height) = cat_texture.dimensions();
         // Get image as raw bytes
         let cat_texture = cat_texture.as_rgb8().unwrap().clone();
         let texture = gl.gen_textures(1)[0];
-        
+
         // load texture data in here
-        
+
         gl.active_texture(gl::TEXTURE0);
-        gl.bind_texture(gl::TEXTURE_2D_ARRAY, texture);
-        gl.tex_parameter_i(
-            gl::TEXTURE_2D_ARRAY,
-            gl::TEXTURE_MAG_FILTER,
-            gl::LINEAR as i32,
-        );
-        gl.tex_parameter_i(
-            gl::TEXTURE_2D_ARRAY,
-            gl::TEXTURE_MIN_FILTER,
-            gl::LINEAR as i32,
-        );
-        gl.tex_image_3d(
-            gl::TEXTURE_2D_ARRAY,
+        gl.bind_texture(gl::TEXTURE_2D, texture);
+        gl.tex_parameter_i(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
+        gl.tex_image_2d(
+            gl::TEXTURE_2D,
             0,
             gl::RGB as i32,
             width as i32,
             height as i32,
-            1,
             0,
             gl::RGB,
             gl::UNSIGNED_BYTE,
             Some(&cat_texture),
-        );*/
+        );
+        gl.generate_mipmap(gl::TEXTURE_2D);
+
+        gl.tex_parameter_i(
+            gl::TEXTURE_2D,
+            gl::TEXTURE_MIN_FILTER,
+            gl::LINEAR_MIPMAP_LINEAR as i32,
+        );
 
         // Create a vertex buffer
         let mut vertices: Vec<f32> = Vec::new();
@@ -268,6 +267,7 @@ impl Context {
             // Set up view matrix
             camera: viewing_matrix(
                 // eye
+                //vec3(12.0, 12.0, 12.0),
                 vec3(12.0, 12.0, 12.0),
                 //vec3(5.0, 10.0, 5.0),
                 //vec3(0.0, 5.0, 0.0),
@@ -405,9 +405,9 @@ uniform vec4 uSpecularProduct;
 uniform vec3 uLightPosition;
 uniform float uShininess;
 
-// Variable sent to fragment shader
+// Variables sent to fragment shader
 out vec4 vColor;
-
+out vec2 vTexCoord;
 
 void main() {
     // Convert vertex and light position into camera coordinates
@@ -444,6 +444,8 @@ void main() {
     vColor = uAmbientProduct + diffuse + specular;
 
     vColor.a = 1.0;
+
+    vTexCoord  = aTexture;
 }
 
 "
@@ -455,12 +457,15 @@ b"#version 300 es
 
 precision mediump float;
 
-
 in vec4 vColor;
+in vec2 vTexCoord;
+
+uniform sampler2D uSampler;
 
 out vec4 oFragColor;
 
 void main() {
-    oFragColor = vColor;
+    //oFragColor = vColor;
+    oFragColor = texture(uSampler, vTexCoord);
 }
 "];

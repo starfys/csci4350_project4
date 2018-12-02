@@ -274,8 +274,7 @@ impl Obj {
                     normal.x, normal.y, normal.z,
                     texture.x, texture.y,
                 ]
-            })
-            .collect()
+            }).collect()
     }
 }
 impl Drawable for Obj {
@@ -307,6 +306,9 @@ impl Drawable for Obj {
         let mv_matrix = matmul(v_matrix, m_matrix);
         gl.uniform_matrix_4fv(mv_location, false, &mv_matrix);
 
+        let sampler_location = gl.get_uniform_location(ctx.program, "uSampler");
+        gl.uniform_1i(sampler_location, 0);
+
         // Lighting properties
         let ambient_location = gl.get_uniform_location(ctx.program, "uAmbientProduct");
         let diffuse_location = gl.get_uniform_location(ctx.program, "uDiffuseProduct");
@@ -326,6 +328,5 @@ impl Drawable for Obj {
 
 #[test]
 fn test_obj() {
-    let _staff =
-        Obj::load("public/staff.obj", vec3(0.1, 0.1, 0.1), vec3(5.0, 3.5, 5.0)).unwrap();
+    let _staff = Obj::load("public/staff.obj", vec3(0.1, 0.1, 0.1), vec3(5.0, 3.5, 5.0)).unwrap();
 }
