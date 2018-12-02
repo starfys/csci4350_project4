@@ -173,13 +173,32 @@ mod test {
 }
 
 // Helper functions
+
+pub fn newell(points: Vec<Vec3>) -> Vec3 {
+    let mut x = 0.0;
+    let mut y = 0.0;
+    let mut z = 0.0;
+
+    for (index, element) in points.iter().enumerate() {
+        let current_element = element;
+        let next_element = points[(index + 1) % points.len()];
+
+        x += (current_element.y - next_element.y) * (current_element.z + next_element.z);
+        y += (current_element.z - next_element.z) * (current_element.x + next_element.x);
+        z += (current_element.x - next_element.x) * (current_element.y + next_element.y);
+    }
+    let norm = Vec3 { x, y, z };
+    let norm = norm.normalize();
+    norm
+}
 /// Generates a tri
 /// a--d
 /// |  |
 /// b--c
 pub fn tri(a: Vec3, b: Vec3, c: Vec3) -> [Vertex; 3] {
     // Calculate normal from a corner
-    let norm = &vec3(0.0, 0.0, 0.0) - ((&c - a).cross(&b - a));
+    //let norm = &vec3(0.0, 0.0, 0.0) - ((&c - a).cross(&b - a));
+    let norm = newell(vec![a, b, c]);
 
     [vertex(a, norm), vertex(b, norm), vertex(c, norm)]
 }
@@ -190,7 +209,10 @@ pub fn tri(a: Vec3, b: Vec3, c: Vec3) -> [Vertex; 3] {
 /// b--c
 pub fn quad(a: Vec3, b: Vec3, c: Vec3, d: Vec3) -> [Vertex; 6] {
     // Calculate normal from a corner
-    let norm = &vec3(0.0, 0.0, 0.0) - ((&d - a).cross(&b - a));
+    
+    let norm = newell(vec![a, b, c, d]);
+
+    //let norm = &vec3(0.0, 0.0, 0.0) - ((&d - a).cross(&b - a));
 
     [
         vertex(a, norm),
@@ -213,8 +235,7 @@ pub fn polygon(vertices: &[Vec3]) -> Vec<Vertex> {
                 vertex(vertices[1], norm),
                 vertex(vertices[2], norm),
             ]
-        })
-        .collect()
+        }).collect()
 }
 
 pub fn star(num_points: u16, in_radius: f32, out_radius: f32) -> Vec<Vec3> {
@@ -236,8 +257,7 @@ pub fn star(num_points: u16, in_radius: f32, out_radius: f32) -> Vec<Vec3> {
                 ),
                 vec3(0.0, 0.0, 0.0),
             ]
-        })
-        .collect()
+        }).collect()
 }
 /// Generates a rectangular_prism, cen
 pub fn rectangular_prism(center: Vec3, width: f32, height: f32, depth: f32) -> Vec<Vertex> {
@@ -288,6 +308,5 @@ pub fn rectangular_prism(center: Vec3, width: f32, height: f32, depth: f32) -> V
                 normal: *normal,
                 texture: *texture,
             },
-        )
-        .collect()
+        ).collect()
 }
