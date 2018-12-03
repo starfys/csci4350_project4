@@ -268,8 +268,8 @@ impl Obj {
                     (
                         // Get the vertex for this
                         /*(&(&self.vertices[(index.vertex_index - 1) as usize] - self.center)
-                            + self.translate)
-                            .scale(self.scale.x, self.scale.y, self.scale.z),*/
+                        + self.translate)
+                        .scale(self.scale.x, self.scale.y, self.scale.z),*/
                         // Get the vertex for this
                         &self.vertices[(index.vertex_index - 1) as usize] - self.center,
                         index
@@ -291,7 +291,8 @@ impl Obj {
                     normal.x, normal.y, normal.z,
                     texture.x, texture.y,
                 ]
-            }).collect()
+            })
+            .collect()
     }
 }
 impl Drawable for Obj {

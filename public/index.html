@@ -14,6 +14,17 @@
 <script>
 // Global var that stores whether the animation should happen
 let animate = 0;
+
+// List of files to preload
+let preload_filenames = [
+    'cat.obj',
+    'cat_diff.tga',
+    'staff.obj',
+    'staff.tga',
+    'girl.obj',
+    'girl_texture.tga',
+];
+
 // Module is used frequently by emscripten
 var Module = {
     // Used to easily access canvas from the code
@@ -22,15 +33,10 @@ var Module = {
     noImageDecoding: true,
     // Pre-load asset files and mount them to directories
     preRun: function() {
-        FS.createPreloadedFile('/', "cat.obj", 'cat.obj',  true, false);
-        FS.createPreloadedFile('/', "cat_diff.tga", 'cat_diff.tga',  true, false);
-        //FS.createPreloadedFile('/', "potion.obj", 'potion.obj',  true, false);
-        FS.createPreloadedFile('/', "staff.obj", 'staff.obj',  true, false);
-        FS.createPreloadedFile('/', "staff.tga", 'staff.tga',  true, false);
-        FS.createPreloadedFile('/', "girl.obj", 'girl.obj',  true, false);
-        FS.createPreloadedFile('/', "girl_texture.tga", 'girl_texture.tga',  true, false);
+        preload_filenames.forEach(function(filename) { 
+            FS.createPreloadedFile('/', filename, filename,  true, false);
+        })
     }
-
 }
 // Set up an event listener for the a key
 addEventListener('keypress', (event) => {
