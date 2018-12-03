@@ -4,7 +4,7 @@ use std::io;
 use std::path::Path;
 
 use gleam::gl;
-use gleam::gl::types::{GLint, GLsizei};
+use gleam::gl::types::{GLenum, GLint, GLsizei};
 
 use super::Context;
 use error::io_error;
@@ -13,8 +13,10 @@ use matrix::{identity, matmul, rotate_x, rotate_y, scale, translate, vec3, Vec2,
 pub trait Drawable {
     /// Returns buffer data
     fn buffer_data(&mut self, vertex_start: GLint) -> Vec<f32>;
+    /// Loads texture data
+    fn load_texture(&self, ctx: &Context) {}
     /// Draws the shape
-    fn draw(&self, gl: &Context);
+    fn draw(&self, ctx: &Context);
 }
 
 /// Used to represent data buffered into vertex
@@ -322,4 +324,42 @@ pub fn rectangular_prism(center: Vec3, width: f32, height: f32, depth: f32) -> V
                 texture: *texture,
             },
         ).collect()
+}
+
+pub fn get_tex_const(index: u8) -> GLenum {
+    match index {
+        0 => gl::TEXTURE0,
+        1 => gl::TEXTURE1,
+        2 => gl::TEXTURE2,
+        3 => gl::TEXTURE3,
+        4 => gl::TEXTURE4,
+        5 => gl::TEXTURE5,
+        6 => gl::TEXTURE6,
+        7 => gl::TEXTURE7,
+        8 => gl::TEXTURE8,
+        9 => gl::TEXTURE9,
+        10 => gl::TEXTURE10,
+        11 => gl::TEXTURE11,
+        12 => gl::TEXTURE12,
+        13 => gl::TEXTURE13,
+        14 => gl::TEXTURE14,
+        15 => gl::TEXTURE15,
+        16 => gl::TEXTURE16,
+        17 => gl::TEXTURE17,
+        18 => gl::TEXTURE18,
+        19 => gl::TEXTURE19,
+        20 => gl::TEXTURE20,
+        21 => gl::TEXTURE21,
+        22 => gl::TEXTURE22,
+        23 => gl::TEXTURE23,
+        24 => gl::TEXTURE24,
+        25 => gl::TEXTURE25,
+        26 => gl::TEXTURE26,
+        27 => gl::TEXTURE27,
+        28 => gl::TEXTURE28,
+        29 => gl::TEXTURE29,
+        30 => gl::TEXTURE30,
+        31 => gl::TEXTURE31,
+        _ => panic!("Out of textures"),
+    }
 }
