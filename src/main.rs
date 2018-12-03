@@ -117,7 +117,8 @@ impl Context {
             vec3(0.5, 0.5, 0.5),
             // Behind the table
             vec3(5.0, 4.0, 1.0),
-        ).unwrap();
+        )
+        .unwrap();
         self.objects.push(Box::new(girl));
 
         // Create the table
@@ -137,7 +138,8 @@ impl Context {
             &mut cur_texture,
             vec3(1.0, 1.0, 1.0),
             vec3(5.0, 3.5, 5.0),
-        ).unwrap();
+        )
+        .unwrap();
         self.objects.push(Box::new(cat));
 
         let star =
@@ -151,7 +153,8 @@ impl Context {
             &mut cur_texture,
             vec3(1.0, 1.0, 1.0),
             vec3(7.0, 3.0, 7.0),
-        ).unwrap();
+        )
+        .unwrap();
         self.objects.push(Box::new(staff));
 
         #[cfg_attr(rustfmt, rustfmt_skip)]
@@ -335,6 +338,8 @@ impl Context {
         }
         gl.bind_vertex_array(0);
     }
+
+    fn reset(&mut self) {}
 }
 
 fn get_canvas_size() -> (u32, u32) {
