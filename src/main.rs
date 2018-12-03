@@ -134,8 +134,8 @@ impl Context {
 
         let staff = Obj::load(
             "/staff.obj",
-            //"/staff.tga",
-            "/cat_diff.tga",
+            "/staff.tga",
+            //"/cat_diff.tga",
             &mut cur_texture,
             vec3(1.0, 1.0, 1.0),
             vec3(7.0, 3.0, 7.0),
@@ -272,7 +272,7 @@ impl Context {
                 //vec3(1.0, 0.0, 0.0),
                 vec3(0.0, 1.0, 0.0),
                 // at
-                vec3(5.0, 5.0, 0.0),
+                vec3(0.0, 0.0, 0.0),
                 //vec3(5.0, 0.0, 5.0),
             ),
             /*p_matrix: perspective_matrix(
