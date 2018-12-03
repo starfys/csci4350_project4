@@ -28,8 +28,6 @@ use emscripten::{
 };
 use gleam::gl;
 use gleam::gl::{GLenum, GLint, GLuint};
-use image::GenericImageView;
-//use image::{GenericImageView, Pixel};
 
 use chair::Chair;
 use desk::Desk;
@@ -92,12 +90,23 @@ impl Context {
     fn init_buffer(&mut self) {
         let gl = &self.gl;
 
+        // Keep track of texture indices
+        let mut cur_texture: u8 = 0;
+
         // Create the room
         let room = Room::new(10.0, 10.0, 10.0);
         self.objects.push(Box::new(room));
 
-        let mirai = Obj::load("/girl.obj", vec3(0.5, 0.5, 0.5), vec3(6.0, 5.0, 1.0)).unwrap();
-        self.objects.push(Box::new(mirai));
+        let girl = Obj::load(
+            "/girl.obj",
+            "girl_texture.tga",
+            &mut cur_texture,
+            // Half size
+            vec3(0.5, 0.5, 0.5),
+            // Behind the table
+            vec3(5.0, 4.0, 1.0),
+        ).unwrap();
+        self.objects.push(Box::new(girl));
 
         // Create the table
         let table = Desk::new(4.0, 4.0, 0.2, 0.2, 0.2, 3.0, vec3(5.0, 0.0, 5.0));
@@ -110,14 +119,27 @@ impl Context {
         self.objects.push(Box::new(chair2));
 
         // Load the cat
-        let cat = Obj::load("/cat.obj", vec3(1.0, 1.0, 1.0), vec3(5.0, 3.5, 5.0)).unwrap();
+        let cat = Obj::load(
+            "/cat.obj",
+            "/cat_diff.tga",
+            &mut cur_texture,
+            vec3(1.0, 1.0, 1.0),
+            vec3(5.0, 3.5, 5.0),
+        ).unwrap();
         self.objects.push(Box::new(cat));
 
         let star =
             extrusion::Extrusion::new(star(5, 0.3, 1.0), vec3(0.0, 0.5, 0.0), vec3(5.0, 8.0, 5.0));
         self.objects.push(Box::new(star));
 
-        let staff = Obj::load("/staff.obj", vec3(1.0, 1.0, 1.0), vec3(7.0, 3.0, 7.0)).unwrap();
+        let staff = Obj::load(
+            "/staff.obj",
+            //"/staff.tga",
+            "/cat_diff.tga",
+            &mut cur_texture,
+            vec3(1.0, 1.0, 1.0),
+            vec3(7.0, 3.0, 7.0),
+        ).unwrap();
         self.objects.push(Box::new(staff));
 
         #[cfg_attr(rustfmt, rustfmt_skip)]
@@ -136,39 +158,7 @@ impl Context {
         //let mut potion = Obj::load("/potion.obj", vec3(5.0, 3.5, 5.0), 1).unwrap();
         //self.objects.push(Box::new(potion));
 
-        // Load the texture file
-        //let cat_texture = image::open("/cat_diff.tga").unwrap();
-        let cat_texture = image::open("/girl_texture.tga").unwrap();
-
-        // Extract dimensions
-        let (width, height) = cat_texture.dimensions();
-        // Get image as raw bytes
-        let cat_texture = cat_texture.as_rgb8().unwrap().clone();
-        let texture = gl.gen_textures(1)[0];
-
         // load texture data in here
-
-        gl.active_texture(gl::TEXTURE0);
-        gl.bind_texture(gl::TEXTURE_2D, texture);
-        gl.tex_parameter_i(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
-        gl.tex_image_2d(
-            gl::TEXTURE_2D,
-            0,
-            gl::RGB as i32,
-            width as i32,
-            height as i32,
-            0,
-            gl::RGB,
-            gl::UNSIGNED_BYTE,
-            Some(&cat_texture),
-        );
-        gl.generate_mipmap(gl::TEXTURE_2D);
-
-        gl.tex_parameter_i(
-            gl::TEXTURE_2D,
-            gl::TEXTURE_MIN_FILTER,
-            gl::LINEAR_MIPMAP_LINEAR as i32,
-        );
 
         // Create a vertex buffer
         let mut vertices: Vec<f32> = Vec::new();
@@ -176,6 +166,10 @@ impl Context {
         for mut object in &mut self.objects {
             let cur_verts = object.buffer_data(vertices.len() as GLint);
             vertices.extend_from_slice(&cur_verts);
+        }
+        // Load each object's textures
+        for object in &self.objects {
+            object.load_texture(&self);
         }
 
         // Parse the model
@@ -255,7 +249,7 @@ impl Context {
         gl.clear_color(0.0, 0.0, 0.0, 1.0);
         // Enable depth testing
         gl.enable(gl::DEPTH_TEST);
-        //gl.enable(gl::CULL_FACE);
+        gl.enable(gl::CULL_FACE);
         // Get canvas size
         let (width, height) = get_canvas_size();
         // Store all state
@@ -267,8 +261,8 @@ impl Context {
             // Set up view matrix
             camera: viewing_matrix(
                 // eye
-                //vec3(12.0, 12.0, 12.0),
                 vec3(12.0, 12.0, 12.0),
+                //vec3(5.0, 5.0, 10.0),
                 //vec3(5.0, 10.0, 5.0),
                 //vec3(0.0, 5.0, 0.0),
                 //vec3(0.0, 10.0, 0.0),
@@ -278,7 +272,7 @@ impl Context {
                 //vec3(1.0, 0.0, 0.0),
                 vec3(0.0, 1.0, 0.0),
                 // at
-                vec3(0.0, 0.0, 0.0),
+                vec3(5.0, 5.0, 0.0),
                 //vec3(5.0, 0.0, 5.0),
             ),
             /*p_matrix: perspective_matrix(

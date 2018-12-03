@@ -1,16 +1,19 @@
 use std::error::Error;
+use std::f32::consts::PI;
+use std::ffi::OsStr;
 use std::fs::File;
 use std::io::{self, BufRead, BufReader};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
 use gleam::gl;
 use gleam::gl::types::{GLint, GLsizei};
+use image::GenericImageView;
 
 use super::Context;
 use error::io_error;
 use matrix::{identity, matmul, rotate_x, rotate_y, scale, translate, vec2, vec3, Vec2, Vec3};
-use render::{Color, Drawable};
+use render::{get_tex_const, Color, Drawable};
 
 #[derive(Debug)]
 pub struct Face<T> {
@@ -97,18 +100,26 @@ pub struct Obj {
     center: Vec3,
     scale: Vec3,
     translate: Vec3,
+    texture_path: PathBuf,
+    cur_texture: u8,
 }
-
 impl Obj {
     /// Loads a render object from a path
-    pub fn load<P>(path: P, scale: Vec3, translate: Vec3) -> Result<Self, io::Error>
+    pub fn load<P, PP>(
+        obj_path: P,
+        texture_path: PP,
+        cur_texture: &mut u8,
+        scale: Vec3,
+        translate: Vec3,
+    ) -> Result<Self, io::Error>
     where
         P: AsRef<Path> + std::fmt::Display,
+        PP: AsRef<OsStr> + Sized,
     {
         // Get the path as string for later
-        let path_str = path.to_string();
+        let path_str = obj_path.to_string();
         // Read the obj file
-        let obj_file = File::open(path)?;
+        let obj_file = File::open(obj_path)?;
         // Create reader for the file
         let obj_file = BufReader::new(obj_file);
         // Buffers for data
@@ -227,6 +238,8 @@ impl Obj {
         // Average out the center
         let center = center * (1.0 / (num_vertices as f32));
         println!("Center for {} is {:?}", path_str, center);
+        // Iterate texture counter forward
+        *cur_texture += 1;
         // Generate the render object
         Ok(Obj {
             groups,
@@ -238,6 +251,8 @@ impl Obj {
             center,
             scale,
             translate,
+            texture_path: Path::new(&texture_path).to_path_buf(),
+            cur_texture: *cur_texture,
         })
     }
 
@@ -252,9 +267,11 @@ impl Obj {
                 face.indices.iter().map(|index| {
                     (
                         // Get the vertex for this
-                        (&(&self.vertices[(index.vertex_index - 1) as usize] - self.center)
+                        /*(&(&self.vertices[(index.vertex_index - 1) as usize] - self.center)
                             + self.translate)
-                            .scale(self.scale.x, self.scale.y, self.scale.z),
+                            .scale(self.scale.x, self.scale.y, self.scale.z),*/
+                        // Get the vertex for this
+                        &self.vertices[(index.vertex_index - 1) as usize] - self.center,
                         index
                             .normal_index
                             .map(|normal_index| self.normals[(normal_index - 1) as usize])
@@ -296,18 +313,63 @@ impl Drawable for Obj {
         // Return vertices
         vertices
     }
+    /// Loads textures
+    fn load_texture(&self, ctx: &Context) {
+        let gl = &ctx.gl;
+        // Read texture
+        let tex_image = image::open(self.texture_path.clone()).unwrap();
+
+        // Extract dimensions
+        let (width, height) = tex_image.dimensions();
+        // Get image as raw bytes
+        let tex_image = tex_image.as_rgb8().unwrap().clone();
+        // Create a texture
+        let texture = gl.gen_textures(1)[0];
+        // Get the texture index as a glenum
+        let tex_enum = get_tex_const(self.cur_texture);
+        gl.active_texture(tex_enum);
+        gl.bind_texture(gl::TEXTURE_2D, texture);
+        gl.tex_parameter_i(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
+        gl.tex_image_2d(
+            gl::TEXTURE_2D,
+            0,
+            gl::RGB as i32,
+            width as i32,
+            height as i32,
+            0,
+            gl::RGB,
+            gl::UNSIGNED_BYTE,
+            Some(&tex_image),
+        );
+        gl.generate_mipmap(gl::TEXTURE_2D);
+
+        gl.tex_parameter_i(
+            gl::TEXTURE_2D,
+            gl::TEXTURE_MIN_FILTER,
+            gl::LINEAR_MIPMAP_LINEAR as i32,
+        );
+    }
     /// Draws the object
     // Return groups
     fn draw(&self, ctx: &Context) {
         let gl = &ctx.gl;
         let mv_location = gl.get_uniform_location(ctx.program, "uMVMatrix");
         let m_matrix = identity();
-        let v_matrix = ctx.camera;
+        let v_matrix = matmul(
+            rotate_y(PI),
+            matmul(
+                scale(self.scale.x, self.scale.y, self.scale.z),
+                matmul(
+                    translate(self.translate.x, self.translate.y, self.translate.z),
+                    ctx.camera,
+                ),
+            ),
+        );
         let mv_matrix = matmul(v_matrix, m_matrix);
         gl.uniform_matrix_4fv(mv_location, false, &mv_matrix);
 
         let sampler_location = gl.get_uniform_location(ctx.program, "uSampler");
-        gl.uniform_1i(sampler_location, 0);
+        gl.uniform_1i(sampler_location, self.cur_texture as i32);
 
         // Lighting properties
         let ambient_location = gl.get_uniform_location(ctx.program, "uAmbientProduct");
@@ -324,9 +386,4 @@ impl Drawable for Obj {
 
         gl.draw_arrays(gl::TRIANGLES, self.vert_start / 8, self.num_verts);
     }
-}
-
-#[test]
-fn test_obj() {
-    let _staff = Obj::load("public/staff.obj", vec3(0.1, 0.1, 0.1), vec3(5.0, 3.5, 5.0)).unwrap();
 }
