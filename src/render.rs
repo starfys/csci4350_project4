@@ -175,13 +175,47 @@ mod test {
 }
 
 // Helper functions
+// Newell Method for surface normal calculation
+pub fn newell(points: Vec<Vec3>) -> Vec3 {
+    /*let mut x = 0.0;
+    let mut y = 0.0;
+    let mut z = 0.0;
+
+    for (index, element) in points.iter().enumerate() {
+        let current_element = element;
+        let next_element = points[(index + 1) % points.len()];
+
+        x += (current_element.y - next_element.y) * (current_element.z + next_element.z);
+        y += (current_element.z - next_element.z) * (current_element.x + next_element.x);
+        z += (current_element.x - next_element.x) * (current_element.y + next_element.y);
+    }
+    let norm = Vec3 { x, y, z };
+    let norm = norm.normalize();
+    norm
+    */
+
+    // Rustic version of the code
+    points.iter().zip(points.iter().cycle().skip(1)).fold(
+        Vec3 {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+        },
+        |acc, (cur, next)| Vec3 {
+            x: acc.x + (cur.y - next.y) * (cur.z + next.z),
+            y: acc.y + (cur.z - next.z) * (cur.x + next.x),
+            z: acc.z + (cur.x - next.x) * (cur.y + next.y),
+        },
+    ).normalize()
+}
 /// Generates a tri
 /// a--d
 /// |  |
 /// b--c
 pub fn tri(a: Vec3, b: Vec3, c: Vec3) -> [Vertex; 3] {
-    // Calculate normal from a corner
-    let norm = &vec3(0.0, 0.0, 0.0) - ((&c - a).cross(&b - a));
+    // Calculate normal using newell method
+    //let norm = &vec3(0.0, 0.0, 0.0) - ((&c - a).cross(&b - a));
+    let norm = newell(vec![a, b, c]);
 
     [vertex(a, norm), vertex(b, norm), vertex(c, norm)]
 }
@@ -191,8 +225,10 @@ pub fn tri(a: Vec3, b: Vec3, c: Vec3) -> [Vertex; 3] {
 /// |  |
 /// b--c
 pub fn quad(a: Vec3, b: Vec3, c: Vec3, d: Vec3) -> [Vertex; 6] {
-    // Calculate normal from a corner
-    let norm = &vec3(0.0, 0.0, 0.0) - ((&d - a).cross(&b - a));
+    // Calculate normal using newell method
+    let norm = newell(vec![a, b, c, d]);
+
+    //let norm = &vec3(0.0, 0.0, 0.0) - ((&d - a).cross(&b - a));
 
     [
         vertex(a, norm),
@@ -208,8 +244,7 @@ pub fn polygon(vertices: &[Vec3]) -> Vec<Vertex> {
     vertices
         .windows(3)
         .flat_map(|vertices| {
-            let norm = &vec3(0.0, 0.0, 0.0)
-                - ((&vertices[2] - vertices[0]).cross(&vertices[1] - vertices[0]));
+            let norm = newell(vec![vertices[0], vertices[1], vertices[2]]);
             vec![
                 vertex(vertices[0], norm),
                 vertex(vertices[1], norm),
