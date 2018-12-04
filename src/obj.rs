@@ -378,7 +378,7 @@ impl Drawable for Obj {
         // Light position
         let shininess_location = gl.get_uniform_location(ctx.program, "uShininess");
 
-        gl.uniform_4f(ambient_location, 0.4, 0.8, 0.8, 1.0);
+        gl.uniform_4f(ambient_location, 0.4, 0.4, 0.4, 1.0);
         gl.uniform_4f(diffuse_location, 0.75164, 0.60648, 0.22648, 1.0);
         gl.uniform_4f(specular_location, 0.628281, 0.555802, 0.366065, 1.0);
 

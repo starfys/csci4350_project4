@@ -326,7 +326,7 @@ impl Context {
         gl.uniform_matrix_4fv(p_location, false, &self.p_matrix);
 
         let light_position_location = gl.get_uniform_location(self.program, "uLightPosition");
-        gl.uniform_3f(light_position_location, 0.5, 12.0, 0.5);
+        gl.uniform_3f(light_position_location, 5.0, 12.0, 5.0);
 
         // Render each object
         gl.bind_vertex_array(self.buffer.unwrap());
