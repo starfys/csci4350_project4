@@ -58,7 +58,7 @@ let preload_filenames = [
 let canvas = document.querySelector('canvas');
 
 //fixes a problem where double clicking causes text to get selected on the canvas
-canvas.addEventListener('selectstart', function(event) { e.preventDefault(); return false; }, false);
+canvas.addEventListener('selectstart', function(event) { event.preventDefault(); return false; }, false);
 // Add event for mouse down on canvas
 canvas.addEventListener('mousedown', function(event) {
     // Start dragging
