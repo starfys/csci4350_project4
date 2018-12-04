@@ -99,7 +99,7 @@ impl Context {
 
         let clock = Obj::load(
             "/clock.obj",
-            "grandfatherclock_uv.bmp",
+            "wood.tga",
             &mut cur_texture,
             // Half size
             vec3(0.5, 0.5, 0.5),
@@ -120,15 +120,14 @@ impl Context {
         ).unwrap();
         self.objects.push(Box::new(girl));
 
-        /*let book = Obj::load(
-            "/chair.obj",
-            "chair_auv.tga",
+        let stack = Obj::load(
+            "/stack.obj",
+            "white.tga",
             &mut cur_texture,
-            vec3(0.5, 0.5, 0.5),
-            vec3(5.0, 3.5, 6.0),
+            vec3(0.05, 0.05, 0.05),
+            vec3(7.0, 3.5, 5.0),
         ).unwrap();
-        self.objects.push(Box::new(book));
-        */
+        self.objects.push(Box::new(stack));
 
         // Create the table
         let table = Desk::new(4.0, 4.0, 0.2, 0.2, 0.2, 3.0, vec3(5.0, 0.0, 5.0));
