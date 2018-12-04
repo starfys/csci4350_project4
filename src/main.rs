@@ -102,14 +102,14 @@ impl Context {
 
         let clock = Obj::load(
             "/clock.obj",
-            "grandfatherclock_uv.tga",
+            "wood.tga",
             &mut cur_texture,
             // Half size
-            vec3(1.0, 1.0, 1.0),
+            vec3(0.5, 0.5, 0.5),
             // Behind the table
-            vec3(0.0, 5.0, 0.0),
-        )
-        .unwrap();
+            vec3(3.0, 5.0, 0.0),
+        ).unwrap();
+
         self.objects.push(Box::new(clock));
 
         let girl = Obj::load(
@@ -123,6 +123,15 @@ impl Context {
         )
         .unwrap();
         self.objects.push(Box::new(girl));
+
+        let stack = Obj::load(
+            "/stack.obj",
+            "white.tga",
+            &mut cur_texture,
+            vec3(0.05, 0.05, 0.05),
+            vec3(7.0, 3.5, 5.0),
+        ).unwrap();
+        self.objects.push(Box::new(stack));
 
         // Create the table
         let table = Desk::new(4.0, 4.0, 0.2, 0.2, 0.2, 3.0, vec3(5.0, 0.0, 5.0));

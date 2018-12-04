@@ -44,6 +44,9 @@ let preload_filenames = [
     'cat.obj',
     'cat_diff.tga',
     'staff.obj',
+    'wood.tga',
+    'stack.obj',
+    'white.tga',
     'staff.tga',
     'girl.obj',
     'girl_texture.tga',
@@ -94,9 +97,11 @@ var Module = {
     noImageDecoding: true,
     // Pre-load asset files and mount them to directories
     preRun: function() {
+
         preload_filenames.forEach(function(filename) { 
             FS.createPreloadedFile('/', filename, filename,  true, false);
         })
+
     }
 }
 
