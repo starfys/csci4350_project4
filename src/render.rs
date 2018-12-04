@@ -195,18 +195,22 @@ pub fn newell(points: Vec<Vec3>) -> Vec3 {
     */
 
     // Rustic version of the code
-    points.iter().zip(points.iter().cycle().skip(1)).fold(
-        Vec3 {
-            x: 0.0,
-            y: 0.0,
-            z: 0.0,
-        },
-        |acc, (cur, next)| Vec3 {
-            x: acc.x + (cur.y - next.y) * (cur.z + next.z),
-            y: acc.y + (cur.z - next.z) * (cur.x + next.x),
-            z: acc.z + (cur.x - next.x) * (cur.y + next.y),
-        },
-    ).normalize()
+    points
+        .iter()
+        .zip(points.iter().cycle().skip(1))
+        .fold(
+            Vec3 {
+                x: 0.0,
+                y: 0.0,
+                z: 0.0,
+            },
+            |acc, (cur, next)| Vec3 {
+                x: acc.x + (cur.y - next.y) * (cur.z + next.z),
+                y: acc.y + (cur.z - next.z) * (cur.x + next.x),
+                z: acc.z + (cur.x - next.x) * (cur.y + next.y),
+            },
+        )
+        .normalize()
 }
 /// Generates a tri
 /// a--d
@@ -250,7 +254,8 @@ pub fn polygon(vertices: &[Vec3]) -> Vec<Vertex> {
                 vertex(vertices[1], norm),
                 vertex(vertices[2], norm),
             ]
-        }).collect()
+        })
+        .collect()
 }
 
 pub fn star(num_points: u16, in_radius: f32, out_radius: f32) -> Vec<Vec3> {
@@ -272,7 +277,8 @@ pub fn star(num_points: u16, in_radius: f32, out_radius: f32) -> Vec<Vec3> {
                 ),
                 vec3(0.0, 0.0, 0.0),
             ]
-        }).collect()
+        })
+        .collect()
 }
 /// Generates a rectangular_prism, cen
 pub fn rectangular_prism(center: Vec3, width: f32, height: f32, depth: f32) -> Vec<Vertex> {
@@ -323,7 +329,8 @@ pub fn rectangular_prism(center: Vec3, width: f32, height: f32, depth: f32) -> V
                 normal: *normal,
                 texture: *texture,
             },
-        ).collect()
+        )
+        .collect()
 }
 
 pub fn get_tex_const(index: u8) -> GLenum {

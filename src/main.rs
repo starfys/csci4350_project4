@@ -108,7 +108,8 @@ impl Context {
             vec3(0.5, 0.5, 0.5),
             // Behind the table
             vec3(3.0, 5.0, 0.0),
-        ).unwrap();
+        )
+        .unwrap();
 
         self.objects.push(Box::new(clock));
 
@@ -130,7 +131,8 @@ impl Context {
             &mut cur_texture,
             vec3(0.05, 0.05, 0.05),
             vec3(7.0, 3.5, 5.0),
-        ).unwrap();
+        )
+        .unwrap();
         self.objects.push(Box::new(stack));
 
         // Create the table
@@ -148,7 +150,7 @@ impl Context {
             "/cat.obj",
             "/cat_diff.tga",
             &mut cur_texture,
-            vec3(1.0, 1.0, 1.0),
+            vec3(2.0, 2.3, 2.0),
             vec3(5.0, 3.5, 5.0),
         )
         .unwrap();
@@ -407,11 +409,8 @@ fn step(ctx: &mut Context) {
         ctx.animate = true;
     }
     // Modify the camera
-    if delta_x != 0 || delta_y != 0 {
-        ctx.camera = matmul(
-            rotate_x(15.0 * (delta_y as f32) / 101.0),
-            matmul(rotate_y(15.0 * (delta_x as f32) / 101.0), ctx.camera),
-        );
+    if delta_x != 0 {
+        ctx.camera = matmul(rotate_y((PI / 3.0) * (delta_x as f32) / 101.0), ctx.camera);
     }
     // Apply animation
     if ctx.animate {
