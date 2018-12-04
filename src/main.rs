@@ -97,6 +97,18 @@ impl Context {
         let room = Room::new(10.0, 10.0, 10.0);
         self.objects.push(Box::new(room));
 
+        let clock = Obj::load(
+            "/clock.obj",
+            "grandfatherclock_uv.bmp",
+            &mut cur_texture,
+            // Half size
+            vec3(1.0, 1.0, 1.0),
+            // Behind the table
+            vec3(0.0, 5.0, 0.0),
+        ).unwrap();
+        self.objects.push(Box::new(clock));
+
+
         let girl = Obj::load(
             "/girl.obj",
             "girl_texture.tga",
@@ -314,7 +326,7 @@ impl Context {
         gl.uniform_matrix_4fv(p_location, false, &self.p_matrix);
 
         let light_position_location = gl.get_uniform_location(self.program, "uLightPosition");
-        gl.uniform_3f(light_position_location, 0.5, 12.0, 0.5);
+        gl.uniform_3f(light_position_location, 5.0, 12.0, 5.0);
 
         // Render each object
         gl.bind_vertex_array(self.buffer.unwrap());
@@ -460,6 +472,6 @@ out vec4 oFragColor;
 
 void main() {
     //oFragColor = vColor;
-    oFragColor = texture(uSampler, vTexCoord);
+    oFragColor = vColor * texture(uSampler, vTexCoord);
 }
 "];
