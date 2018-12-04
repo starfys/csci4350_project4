@@ -31,7 +31,10 @@ use gleam::gl::{GLenum, GLint, GLuint};
 
 use chair::Chair;
 use desk::Desk;
-use matrix::{orthogonal_matrix, perspective_matrix, vec3, viewing_matrix, Matrix44, Vec3};
+use matrix::{
+    matmul, orthogonal_matrix, perspective_matrix, rotate_x, rotate_y, vec3, viewing_matrix,
+    Matrix44, Vec3,
+};
 use obj::Obj;
 use render::{star, Drawable};
 use room::Room;
@@ -99,15 +102,15 @@ impl Context {
 
         let clock = Obj::load(
             "/clock.obj",
-            "grandfatherclock_uv.bmp",
+            "grandfatherclock_uv.tga",
             &mut cur_texture,
             // Half size
             vec3(1.0, 1.0, 1.0),
             // Behind the table
             vec3(0.0, 5.0, 0.0),
-        ).unwrap();
+        )
+        .unwrap();
         self.objects.push(Box::new(clock));
-
 
         let girl = Obj::load(
             "/girl.obj",
@@ -288,7 +291,7 @@ impl Context {
                 vec3(0.0, 1.0, 0.0),
                 // at
                 vec3(0.0, 0.0, 0.0),
-                //vec3(5.0, 0.0, 5.0),
+                //vec3(5.0, 5.0, 5.0),
             ),
             /*p_matrix: perspective_matrix(
                 // FOV
@@ -329,7 +332,7 @@ impl Context {
         gl.uniform_matrix_4fv(p_location, false, &self.p_matrix);
 
         let light_position_location = gl.get_uniform_location(self.program, "uLightPosition");
-        gl.uniform_3f(light_position_location, 5.0, 12.0, 5.0);
+        gl.uniform_3f(light_position_location, 5.0, 7.0, 5.0);
 
         // Render each object
         gl.bind_vertex_array(self.buffer.unwrap());
@@ -339,7 +342,27 @@ impl Context {
         gl.bind_vertex_array(0);
     }
 
-    fn reset(&mut self) {}
+    fn reset(&mut self) {
+        // Reset the camera
+        self.camera = viewing_matrix(
+            // eye
+            vec3(12.0, 12.0, 12.0),
+            //vec3(5.0, 5.0, 10.0),
+            //vec3(5.0, 10.0, 5.0),
+            //vec3(0.0, 5.0, 0.0),
+            //vec3(0.0, 10.0, 0.0),
+            //vec3(0.0, 0.0, 10.0),
+
+            // up
+            //vec3(1.0, 0.0, 0.0),
+            vec3(0.0, 1.0, 0.0),
+            // at
+            vec3(0.0, 0.0, 0.0),
+            //vec3(5.0, 5.0, 5.0),
+        );
+        // Reset spinning
+        self.theta = 0.0;
+    }
 }
 
 fn get_canvas_size() -> (u32, u32) {
@@ -354,12 +377,32 @@ fn get_canvas_size() -> (u32, u32) {
 fn step(ctx: &mut Context) {
     // Extract information from the JS as one integer
     let code = "{return get_state();}\0";
-    let animate = unsafe { emscripten_asm_const_int(code.as_ptr() as *const _) };
+
+    let mut state = unsafe { emscripten_asm_const_int(code.as_ptr() as *const _) };
+
+    let reset = state % 2;
+    state /= 2;
+    let animate = state % 2;
+    state /= 2;
+    let delta_y = state % 101;
+    state /= 101;
+    let delta_x = state % 101;
+
+    if reset == 1 {
+        ctx.reset()
+    }
     // Set animation state
     if animate == 0 && ctx.animate {
         ctx.animate = false;
     } else if animate == 1 && !ctx.animate {
         ctx.animate = true;
+    }
+    // Modify the camera
+    if delta_x != 0 || delta_y != 0 {
+        ctx.camera = matmul(
+            rotate_x(15.0 * (delta_y as f32) / 101.0),
+            matmul(rotate_y(15.0 * (delta_x as f32) / 101.0), ctx.camera),
+        );
     }
     // Apply animation
     if ctx.animate {

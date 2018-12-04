@@ -20,15 +20,22 @@ const DELTA_Y = 1;
 let reset = 0;
 // Global var that stores whether the animation should happen
 let animate = 0;
-// Global var that stores the current L-R rotation about the y axis
-let y_rotation = 0;
-// Global var that stores the current U-D rotation about the x axis
-let x_rotation = 0;
+// Global vars to control dragging
+let drag = false;
+let drag_start_x = 0;
+let drag_start_y = 0;
+let drag_delta_x = 0;
+let drag_delta_y = 0;
 
 // Function that returns scene state, packed as an integer
 function get_state() {
-    // return ((x_rotation * 360) + y_rotation) * 360
-    return animate;
+    // Pack everything into an integer
+    let state = ((Math.round(drag_delta_x) * 101 + Math.round(drag_delta_y)) * 2 + animate) * 2 + reset;
+    // Delete existing deltas
+    drag_delta_x = 0;
+    drag_delta_y = 0;
+    reset = 0;
+    return state;
 }
 
 
@@ -40,6 +47,8 @@ let preload_filenames = [
     'staff.tga',
     'girl.obj',
     'girl_texture.tga',
+    'clock.obj',
+    'grandfatherclock_uv.tga'
 ];
 
 // Set up listeners on canvas
@@ -49,7 +58,31 @@ let canvas = document.querySelector('canvas');
 canvas.addEventListener('selectstart', function(e) { e.preventDefault(); return false; }, false);
 // Add event for mouse down on canvas
 canvas.addEventListener('mousedown', function(e) {
+    // Start dragging
+    drag = true;
+    // Get initial mouse location
+    drag_start_x = event.pageX - canvas.offsetLeft;
+    drag_start_y = event.pageY - canvas.offsetTop;
 
+});
+// Add event for mouse move on canvas
+canvas.addEventListener('mousemove', function(e) {
+    if(drag) {
+        // Get current mouse location
+        let x = event.pageX - canvas.offsetLeft;
+        let y = event.pageY - canvas.offsetTop;
+        // Get delta from last stored location
+        drag_delta_x += 100 * (x - drag_start_x) / canvas.width;
+        drag_delta_y += 100 * (y - drag_start_y) / canvas.height;
+        // Store new last location
+        drag_start_x = x;
+        drag_start_y = y;
+    }
+});
+// Add event for mouse up on canvas
+canvas.addEventListener('mouseup', function(e) {
+    drag = false;
+    console.log(drag_delta_x, drag_delta_y);
 });
 
 // Module is used frequently by emscripten
@@ -71,14 +104,22 @@ addEventListener('keypress', (event) => {
     if(event.key.toUpperCase() == 'A') {
         if(animate == 0) {
             animate = 1;
+            let audio = document.querySelector("audio");
+            audio.play();
         }
         else if(animate == 1) {
             animate = 0;
+            let audio = document.querySelector("audio");
+            audio.pause();
         }
     }
     else if(event.key.toUpperCase() == 'B') {
         if(reset == 0) {
             reset = 1;
+            animate = 0;
+            let audio = document.querySelector("audio");
+            audio.pause();
+            audio.currentTime = 0;
         }
         else if(reset == 1) {
             reset = 0;
@@ -118,6 +159,10 @@ xhr.open("GET", "project4.wasm");
 // Start the request
 xhr.send();
 </script>
+
+<audio>
+    <source src="bgm.mp3" type="audio/mpeg">
+</audio>
 
 </body>
 </html>
