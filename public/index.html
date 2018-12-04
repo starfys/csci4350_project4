@@ -14,6 +14,17 @@
 <script>
 // Global var that stores whether the animation should happen
 let animate = 0;
+// Global var that stores the current L-R rotation about the y axis
+let y_rotation = 0;
+// Global var that stores the current U-D rotation about the x axis
+let x_rotation = 0;
+
+// Function that returns scene state, packed as an integer
+function get_state() {
+    return ((x_rotation % 360) * 360) + ((y_rotation % 360) * 360)
+    // return animate;
+}
+
 
 // List of files to preload
 let preload_filenames = [
