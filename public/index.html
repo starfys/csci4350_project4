@@ -85,7 +85,6 @@ canvas.addEventListener('mousemove', function(e) {
 // Add event for mouse up on canvas
 canvas.addEventListener('mouseup', function(e) {
     drag = false;
-    console.log(drag_delta_x, drag_delta_y);
 });
 
 
@@ -139,9 +138,7 @@ addEventListener('keypress', (event) => {
             reset = 0;
         }
     }
-    else {
-        console.log(event.key);
-    }
+    else {}
 });
 
 
