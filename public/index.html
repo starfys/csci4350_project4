@@ -42,10 +42,20 @@ let preload_filenames = [
     'girl_texture.tga',
 ];
 
+// Set up listeners on canvas
+let canvas = document.querySelector('canvas');
+
+//fixes a problem where double clicking causes text to get selected on the canvas
+canvas.addEventListener('selectstart', function(e) { e.preventDefault(); return false; }, false);
+// Add event for mouse down on canvas
+canvas.addEventListener('mousedown', function(e) {
+
+});
+
 // Module is used frequently by emscripten
 var Module = {
     // Used to easily access canvas from the code
-    canvas: document.querySelector('canvas'),
+    canvas: canvas,
     // Disable pre-decoding
     noImageDecoding: true,
     // Pre-load asset files and mount them to directories
@@ -56,11 +66,6 @@ var Module = {
     }
 }
 
-//fixes a problem where double clicking causes text to get selected on the canvas
-canvas.addEventListener('selectstart', function(e) { e.preventDefault(); return false; }, false);
-canvas.addEventListener('mousedown', function(e) {
-
-});
 // Set up an event listener for the a key
 addEventListener('keypress', (event) => {
     if(event.key.toUpperCase() == 'A') {
