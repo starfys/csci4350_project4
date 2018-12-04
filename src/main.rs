@@ -340,8 +340,8 @@ fn get_canvas_size() -> (u32, u32) {
 }
 
 fn step(ctx: &mut Context) {
-    // Check whether we should animate
-    let code = "{return animate;}\0";
+    // Extract information from the JS as one integer
+    let code = "{return get_state();}\0";
     let animate = unsafe { emscripten_asm_const_int(code.as_ptr() as *const _) };
     // Set animation state
     if animate == 0 && ctx.animate {
